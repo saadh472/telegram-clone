@@ -1,8 +1,8 @@
-const STATIC_CACHE = 'telegram-clone-static-v20260722';
+const STATIC_CACHE = 'telegram-clone-static-v20260722-rebuild';
 const CORE_ASSETS = [
   './',
   './index.html',
-  './css/style.css?v=app-polish-20260722',
+  './css/style.css?v=frontend-rebuild-20260722',
   './js/deploy-config.js',
   './manifest.webmanifest',
   './assets/icons/telegram-app.svg'
