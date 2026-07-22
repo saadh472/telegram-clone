@@ -683,7 +683,7 @@ export function buildLinkPreviewHtml(url) {
 
 /** Ripple effect for icon buttons — call once after DOM ready. */
 export function initRippleButtons(root = document) {
-  const selector = '.icon-btn, .input-tool-btn, .action-btn, .header-action-btn, .chat-action-btn, .new-chat-fab, .btn-primary, .btn-secondary, .btn-danger, .btn-ghost, .settings-quick-action, .chat-filter-tab';
+  const selector = '.icon-btn, .input-tool-btn, .action-btn, .header-action-btn, .chat-action-btn, .new-chat-fab, .install-app-btn, .btn-primary, .btn-secondary, .btn-danger, .btn-ghost, .settings-quick-action, .chat-filter-tab';
   $$(selector, root).forEach((btn) => {
     if (btn.dataset.ripple) return;
     btn.dataset.ripple = '1';

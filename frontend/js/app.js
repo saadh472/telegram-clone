@@ -9,6 +9,7 @@ import { initThemeController } from './theme.js';
 import { initChatWallpaper } from './chatWallpaper.js';
 import { initFocusGuards, initRippleButtons } from './utils.js';
 import { initProfileController } from './controllers/profileController.js';
+import { initPwaController } from './pwa.js';
 
 async function init() {
   try {
@@ -20,6 +21,7 @@ async function init() {
     initAuthController();
     initChatController();
     initProfileController();
+    initPwaController();
     initConnectivityListeners();
     updateOfflineBanner();
     await bootstrapAuth();

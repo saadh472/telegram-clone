@@ -1,0 +1,36 @@
+{
+  "name": "Telegram Web Clone",
+  "short_name": "Telegram",
+  "description": "A polished Telegram-style messaging app with private chats, groups, reactions, notifications, settings, and installable app support.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0e1621",
+  "theme_color": "#3390ec",
+  "categories": ["social", "productivity"],
+  "icons": [
+    {
+      "src": "assets/icons/telegram-app.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New chat",
+      "short_name": "New chat",
+      "description": "Open the app and start a new conversation.",
+      "url": ".#new-chat",
+      "icons": [{ "src": "assets/icons/telegram-app.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Settings",
+      "short_name": "Settings",
+      "description": "Open app settings.",
+      "url": ".#settings",
+      "icons": [{ "src": "assets/icons/telegram-app.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ]
+}

@@ -97,8 +97,12 @@ export function updateChatItemSummary(chat) {
   if (!chat?.id) return false;
   const item = $(`.chat-item[data-id="${chat.id}"]`);
   if (!item) return false;
+  const active = chat.id === chatState.activeChatId;
+  const unread = chat.unread_count > 0 && !active;
   const preview = item.querySelector('.chat-preview');
   const time = item.querySelector('.chat-time');
+  const name = item.querySelector('.chat-name');
+  const meta = item.querySelector('.chat-item-meta');
   if (preview) {
     const e2e = isE2eEnabledForChat(chat);
     preview.innerHTML = `${e2e ? E2E_LOCK_ICON : ''}${buildPreviewHtml(chat.last_message, { deleted: chat.last_message_deleted })}`;
@@ -106,7 +110,52 @@ export function updateChatItemSummary(chat) {
   if (time) {
     time.textContent = formatChatTime(chat.last_message_time);
   }
+  if (name) name.classList.toggle('bold', unread);
+  item.classList.toggle('active', active);
+  item.classList.toggle('unread', unread);
+  item.setAttribute('aria-current', active ? 'true' : 'false');
+  item.setAttribute('aria-label', [
+    chat.display_name || 'Chat',
+    unread ? `${chat.unread_count} unread message${chat.unread_count === 1 ? '' : 's'}` : '',
+    getChatPref(chat.id).pinned ? 'pinned' : '',
+    getChatPref(chat.id).archived ? 'archived' : ''
+  ].filter(Boolean).join(', '));
+  if (meta) {
+    let badge = meta.querySelector('.unread-badge');
+    if (unread) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'unread-badge';
+        meta.appendChild(badge);
+      }
+      badge.textContent = chat.unread_count > 9 ? '9+' : String(chat.unread_count);
+    } else {
+      badge?.remove();
+    }
+  }
   return true;
+}
+
+export function chatListRenderOrderKey(chats, query = uiState.chatSearchQuery) {
+  const q = query.trim().toLowerCase();
+  const activeSorted = sortChats(filterByMode(filterActiveChats(chats)));
+  const archivedSorted = sortChats(filterByMode(filterArchivedChats(chats)));
+  const filtered = filterByQuery(activeSorted, q);
+  const archivedFiltered = filterByQuery(archivedSorted, q);
+  return [...filtered, ...archivedFiltered]
+    .map((chat) => `${getChatPref(chat.id).archived ? 'archived' : 'active'}:${chat.id}`)
+    .join('|');
+}
+
+export function updateChatListSummariesInPlace(chats) {
+  const list = $(SELECTORS.chatList);
+  if (!list?.querySelector('.chat-item')) return false;
+  let updatedAll = true;
+  chats.forEach((chat) => {
+    if (!updateChatItemSummary(chat)) updatedAll = false;
+  });
+  updateChatListActiveState();
+  return updatedAll;
 }
 
 function buildEmptySearchHtml(q) {
@@ -407,8 +456,9 @@ export function closeNewChatModal() {
   setTimeout(() => {
     modal.classList.add('hidden');
     modal.classList.remove('closing');
-    restoreFocus(modal, SELECTORS.newChatBtn);
+      restoreFocus(modal, SELECTORS.newChatBtn);
   }, 220);
+  if (window.location.hash === '#new-chat') clearRouteHash();
 }
 
 export function showModalLoading() {

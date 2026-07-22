@@ -6,6 +6,11 @@
   <meta name="theme-color" content="#0c1117" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#fafbfc" media="(prefers-color-scheme: light)">
   <meta name="color-scheme" content="dark light">
+  <meta name="description" content="A polished Telegram-style messaging app with private chats, groups, reactions, notifications, settings, and installable app support.">
+  <meta name="application-name" content="Telegram Web Clone">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Telegram Web">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Telegram Web</title>
   <script>
     (function () {
@@ -19,12 +24,14 @@
       }
     })();
   </script>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%233390ec'/><path fill='white' d='M22 52l38-16-16 38-4-14-14-4z'/></svg>">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icons/telegram-app.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icons/telegram-app.svg">
   <link rel="preconnect" href="http://localhost:3000" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=performance-virtual-20260626">
+  <link rel="stylesheet" href="css/style.css?v=app-polish-20260722">
 </head>
 <body>
   <a href="#login-form" class="skip-link" id="skip-link">Skip to main content</a>
@@ -658,6 +665,11 @@
   <button type="button" id="theme-toggle-top" class="theme-toggle-btn icon-btn" aria-label="Toggle theme" title="Dark mode">
     <svg class="icon-sun" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 0 0 0-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>
     <svg class="icon-moon hidden" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+  </button>
+
+  <button type="button" id="install-app-btn" class="install-app-btn hidden" aria-label="Install app" title="Install Telegram Web">
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg>
+    <span>Install</span>
   </button>
 
   <script src="js/deploy-config.js"></script>

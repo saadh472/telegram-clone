@@ -9,5 +9,7 @@ All notable project changes should be documented here.
 - Added architecture, API, and development documentation.
 - Added GitHub Pages frontend deployment workflow and Render Docker backend deployment config.
 - Added production WSGI entrypoint and hosted SQL Server authentication support.
+- Added installable web-app support with manifest, service worker shell caching, and an install prompt.
+- Improved sidebar polling stability by refreshing chat summaries in place when the visible order is unchanged.
 - Added contributing, security, license, and editor configuration files.
 - Reworked README for clearer setup, project positioning, and troubleshooting.

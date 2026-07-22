@@ -24,7 +24,7 @@ import {
   showActiveChatPanel, hideActiveChatPanel, closeSidebarMobile,
   openNewChatModal, closeNewChatModal, showModalLoading, renderUserList, showModalError,
   focusUserListItem, selectFocusedUser, closeSettingsPanel, openSettingsPanel, toggleSettingsPanel,
-  syncChatFilterTabs, updateChatItemSummary,
+  syncChatFilterTabs, updateChatItemSummary, chatListRenderOrderKey, updateChatListSummariesInPlace,
   openProfilePage, closeProfilePage, isProfileOpen, isSettingsOpen
 } from '../views/chatListView.js';
 import { renderUserInfo } from '../views/authView.js';
@@ -234,6 +234,7 @@ export function onShowApp() {
     onSettings: () => { if (!isSettingsOpen()) openSettingsPanel({ fromRoute: true }); },
     onProfile: () => { if (!isProfileOpen()) openProfilePage({ from: 'sidebar', fromRoute: true }); },
     onNotifications: () => { if (!isNotificationsOpen()) openNotificationsPanel({ fromRoute: true }); },
+    onNewChat: () => { handleOpenNewChatModal(); },
     onHome: () => {
       if (chatState.activeChatId) {
         hideActiveChatPanel();
@@ -335,6 +336,9 @@ function applyChatsUpdate(chats) {
   const nextChats = applyLocalActiveSummary(chats);
   const fp = chatsFingerprint(nextChats);
   const listHasItems = !!$(SELECTORS.chatList)?.querySelector('.chat-item');
+  const prevOrderKey = chatListRenderOrderKey(chatState.chats, uiState.chatSearchQuery);
+  const nextOrderKey = chatListRenderOrderKey(nextChats, uiState.chatSearchQuery);
+  const prevUnread = new Map(chatState.chats.map((c) => [c.id, c.unread_count]));
 
   if (uiState.lastChatListFingerprint?.startsWith(`${fp}|`) && listHasItems) {
     chatState.chats = nextChats;
@@ -345,7 +349,6 @@ function applyChatsUpdate(chats) {
     return;
   }
 
-  const prevUnread = new Map(chatState.chats.map((c) => [c.id, c.unread_count]));
   chatState.chats = nextChats;
   chatState.chats.forEach((c) => {
     const prev = prevUnread.get(c.id) ?? 0;
@@ -359,6 +362,10 @@ function applyChatsUpdate(chats) {
   updateTabBadge(unreadTotal);
   updateSidebarBadge(unreadTotal);
   updateNotificationBadge();
+  if (listHasItems && prevOrderKey && prevOrderKey === nextOrderKey && updateChatListSummariesInPlace(nextChats)) {
+    uiState.lastChatListFingerprint = `${fp}|${uiState.chatFilter}|${uiState.chatSearchQuery.trim().toLowerCase()}`;
+    return;
+  }
   renderChatList(uiState.chatSearchQuery, openChat);
 }
 

@@ -8,6 +8,7 @@ let handlers = {
   onSettings: null,
   onProfile: null,
   onNotifications: null,
+  onNewChat: null,
   onHome: null
 };
 
@@ -21,6 +22,7 @@ export function parseRoute(hash = window.location.hash) {
   if (raw === 'settings') return { name: 'settings' };
   if (raw === 'profile') return { name: 'profile' };
   if (raw === 'notifications') return { name: 'notifications' };
+  if (raw === 'new-chat') return { name: 'new-chat' };
   const chatMatch = raw.match(/^chat\/(\d+)$/);
   if (chatMatch) return { name: 'chat', chatId: Number(chatMatch[1]) };
   return { name: 'unknown', raw };
@@ -36,6 +38,8 @@ export function buildHash(route) {
       return '#profile';
     case 'notifications':
       return '#notifications';
+    case 'new-chat':
+      return '#new-chat';
     default:
       return '';
   }
@@ -80,6 +84,9 @@ function dispatchRoute(route) {
       break;
     case 'notifications':
       handlers.onNotifications?.();
+      break;
+    case 'new-chat':
+      handlers.onNewChat?.();
       break;
     case 'home':
       handlers.onHome?.();
