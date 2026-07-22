@@ -502,6 +502,8 @@ export async function loadChats(showSkeleton = false, { silent = false } = {}) {
 export async function openChat(chatId, { fromRoute = false } = {}) {
   saveActiveDraft();
   setActiveChat(chatId);
+  const panel = $(SELECTORS.chatPanel);
+  panel?.classList.add('chat-switching');
   messageDeltaPolls = 0;
   uiState.newBelowCount = 0;
   uiState.userNearBottom = true;
@@ -522,7 +524,11 @@ export async function openChat(chatId, { fromRoute = false } = {}) {
   setInputAreaEnabled(true);
   updateInputState();
   showMessagesSkeleton();
-  await loadMessages(true);
+  try {
+    await loadMessages(true);
+  } finally {
+    requestAnimationFrame(() => panel?.classList.remove('chat-switching'));
+  }
   updateInputState();
   applyReceiverMode(uiState.receiverView);
   restoreDraft(chatId);
