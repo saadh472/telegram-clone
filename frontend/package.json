@@ -1,0 +1,12 @@
+{
+  "name": "telegram-clone-frontend",
+  "version": "1.0.0",
+  "description": "Telegram Web clone frontend",
+  "scripts": {
+    "start": "http-server -p 5500 -a 0.0.0.0 -c-1 -i index.html",
+    "check": "node scripts/check-js.mjs"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

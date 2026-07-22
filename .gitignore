@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.env
+.venv/
+venv/
+frontend/node_modules/
+*.log
+*.db
+node_modules/
+dist/
+release/
+desktop/build/
+desktop/dist/
+*.spec

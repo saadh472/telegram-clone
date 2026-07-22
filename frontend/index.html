@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0c1117" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#fafbfc" media="(prefers-color-scheme: light)">
+  <meta name="color-scheme" content="dark light">
+  <title>Telegram Web</title>
+  <script>
+    (function () {
+      var t = localStorage.getItem('telegram-theme');
+      document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+      var w = localStorage.getItem('telegram-chat-wallpaper');
+      if (w === 'dots' || w === 'gradient' || w === 'default') {
+        document.documentElement.setAttribute('data-chat-wallpaper', w);
+      } else {
+        document.documentElement.setAttribute('data-chat-wallpaper', 'default');
+      }
+    })();
+  </script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%233390ec'/><path fill='white' d='M22 52l38-16-16 38-4-14-14-4z'/></svg>">
+  <link rel="preconnect" href="http://localhost:3000" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=performance-virtual-20260626">
+</head>
+<body>
+  <a href="#login-form" class="skip-link" id="skip-link">Skip to main content</a>
+  <script>document.body.setAttribute('data-theme', document.documentElement.getAttribute('data-theme') || 'dark');</script>
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <div id="offline-banner" class="status-banner hidden" role="alert">
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.237 4.237 0 0 0-6 0zm-4-4l2 2a7.074 7.074 0 0 1 8 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+    <span>You are offline. Cannot send messages until connection returns.</span>
+  </div>
+
+  <div id="connection-banner" class="status-banner connection-banner hidden" role="alert" aria-live="polite">
+    <span class="connection-banner-spinner" aria-hidden="true"></span>
+    <span>Reconnecting to server…</span>
+  </div>
+
+  <!-- Auth -->
+  <div id="auth-screen" class="auth-screen">
+    <div class="auth-bg" aria-hidden="true"></div>
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="logo-circle">
+          <svg viewBox="0 0 240 240" width="72" height="72" aria-hidden="true">
+            <circle cx="120" cy="120" r="120" class="logo-accent"/>
+            <path class="logo-on-accent" d="M81.229 128.772l14.237 39.406s1.78 3.687 3.686 3.687 30.255-29.492 30.255-29.492l31.525-60.89L81.737 118.6z"/>
+          </svg>
+        </div>
+        <h1>Telegram Web</h1>
+        <p class="auth-tagline">Fast. Secure. Powerful.</p>
+      </div>
+
+      <p id="backend-status" class="backend-status hidden" role="alert"></p>
+      <p id="session-expired-msg" class="session-expired-msg hidden" role="alert">Your session expired. Please log in again.</p>
+
+      <div class="auth-tabs" role="tablist" aria-label="Authentication">
+        <button type="button" class="auth-tab active" role="tab" aria-selected="true" aria-controls="login-form" data-tab="login">Log In</button>
+        <button type="button" class="auth-tab" role="tab" aria-selected="false" aria-controls="register-form" data-tab="register">Sign Up</button>
+      </div>
+
+      <form id="login-form" class="auth-form" novalidate>
+        <div class="form-group">
+          <label for="login-username">Username</label>
+          <input type="text" id="login-username" placeholder="saad" autocomplete="username" required maxlength="64">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <div class="password-wrap">
+            <input type="password" id="login-password" placeholder="12345678" autocomplete="current-password" required minlength="6" maxlength="128">
+            <button type="button" class="password-toggle" data-target="login-password" aria-label="Show password">
+              <svg class="icon-eye" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+              <svg class="icon-eye-off hidden" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27z"/></svg>
+            </button>
+          </div>
+        </div>
+        <p id="login-error" class="form-error hidden" role="alert"></p>
+        <button type="submit" class="btn-primary" id="login-btn">
+          <span class="btn-text">Log In</span>
+          <span class="btn-spinner hidden" aria-hidden="true"></span>
+        </button>
+      </form>
+
+      <form id="register-form" class="auth-form hidden" novalidate>
+        <div class="form-group">
+          <label for="register-name">Display Name</label>
+          <input type="text" id="register-name" placeholder="Your name" autocomplete="name" required maxlength="64">
+        </div>
+        <div class="form-group">
+          <label for="register-username">Username</label>
+          <input type="text" id="register-username" placeholder="username" autocomplete="username" required maxlength="64">
+        </div>
+        <div class="form-group">
+          <label for="register-password">Password</label>
+          <div class="password-wrap">
+            <input type="password" id="register-password" placeholder="Min 6 characters" autocomplete="new-password" required minlength="6" maxlength="128">
+            <button type="button" class="password-toggle" data-target="register-password" aria-label="Show password">
+              <svg class="icon-eye" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+              <svg class="icon-eye-off hidden" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27z"/></svg>
+            </button>
+          </div>
+        </div>
+        <p id="register-error" class="form-error hidden" role="alert"></p>
+        <button type="submit" class="btn-primary" id="register-btn">
+          <span class="btn-text">Create Account</span>
+          <span class="btn-spinner hidden" aria-hidden="true"></span>
+        </button>
+      </form>
+
+      <p class="demo-hint"><span class="demo-hint-pill">Demo account: <strong>saad</strong> / <strong>12345678</strong></span></p>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="app" class="app hidden">
+    <div id="sidebar-overlay" class="sidebar-overlay hidden" aria-hidden="true"></div>
+
+    <aside class="sidebar" id="sidebar">
+      <header class="sidebar-header">
+        <button type="button" id="menu-btn" class="icon-btn sidebar-app-btn" aria-label="Open menu" aria-haspopup="menu" aria-expanded="false">
+          <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+          <span id="sidebar-unread-badge" class="sidebar-unread-badge hidden" aria-label="Unread messages"></span>
+        </button>
+        <div class="search-box">
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="search" id="search-input" placeholder="Search" aria-label="Search chats" aria-controls="chat-list" autocomplete="off">
+          <span class="search-key-hint" aria-hidden="true">Ctrl+K</span>
+          <button type="button" id="search-clear-btn" class="search-clear-btn hidden" aria-label="Clear chat search">&times;</button>
+        </div>
+        <button type="button" id="notifications-btn" class="icon-btn sidebar-notifications-btn" aria-label="Notifications" title="Notifications">
+          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+          <span id="sidebar-notifications-badge" class="sidebar-notifications-badge hidden" aria-label="Unread notifications"></span>
+        </button>
+        <button type="button" id="new-chat-btn" class="icon-btn new-chat-fab" aria-label="New chat">
+          <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        </button>
+      </header>
+      <div class="sidebar-filter-wrap">
+        <div id="chat-filter-tabs" class="chat-filter-tabs" role="tablist" aria-label="Chat filters">
+          <button type="button" class="chat-filter-tab active" role="tab" aria-selected="true" data-filter="all">All</button>
+          <button type="button" class="chat-filter-tab" role="tab" aria-selected="false" data-filter="unread">Unread</button>
+          <button type="button" class="chat-filter-tab" role="tab" aria-selected="false" data-filter="groups">Groups</button>
+        </div>
+        <p id="chat-list-status" class="chat-list-status" aria-live="polite"></p>
+      </div>
+      <div id="chat-list" class="chat-list"></div>
+      <footer class="sidebar-footer">
+        <button type="button" id="user-profile-btn" class="user-profile-btn" aria-label="Open profile">
+          <div id="user-info" class="user-info"></div>
+        </button>
+        <button type="button" id="logout-btn" class="icon-btn logout-icon-btn" aria-label="Log out" title="Log out">
+          <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        </button>
+      </footer>
+    </aside>
+
+    <main class="chat-panel" id="chat-panel" tabindex="-1">
+      <div id="empty-state" class="empty-state chat-wallpaper-surface">
+        <div class="empty-state-card">
+          <div class="empty-illustration" aria-hidden="true">
+            <div class="empty-glow"></div>
+            <svg class="empty-logo-svg" viewBox="0 0 200 200" width="140" height="140" aria-hidden="true">
+              <circle class="empty-logo-orbit logo-accent" cx="100" cy="100" r="56" opacity="0.12"/>
+              <circle cx="100" cy="100" r="36" class="logo-accent"/>
+              <path class="logo-on-accent" d="M68 102l9 26s1.2 2.5 2.5 2.5 25-20 25-20l26-40-58 27z"/>
+            </svg>
+          </div>
+          <h2>Select a chat to start messaging</h2>
+          <p>Pick a conversation, start a new chat, or learn the shortcuts that make messaging faster.</p>
+          <div class="empty-state-actions">
+            <button type="button" id="empty-new-chat-btn" class="btn-primary">Start New Chat</button>
+            <button type="button" id="empty-shortcuts-btn" class="btn-secondary">Shortcuts</button>
+          </div>
+          <div class="empty-state-tips" aria-label="Helpful shortcuts">
+            <span><kbd>Ctrl</kbd> + <kbd>K</kbd> Search</span>
+            <span><kbd>Ctrl</kbd> + <kbd>N</kbd> New chat</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="active-chat" class="active-chat hidden">
+        <header class="chat-header">
+          <button type="button" id="back-btn" class="icon-btn back-btn" aria-label="Back to chats">
+            <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+          </button>
+          <div class="chat-header-info clickable" id="chat-header-info" role="button" tabindex="0" aria-label="Chat info">
+            <div id="chat-avatar" class="avatar header-avatar"></div>
+            <div class="chat-header-text">
+              <div class="chat-title-row">
+                <h2 id="chat-title"></h2>
+                <span id="chat-e2e-lock" class="chat-e2e-lock hidden" title="End-to-end encrypted" aria-label="End-to-end encrypted">
+                  <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                </span>
+              </div>
+              <span id="chat-status" class="chat-status"></span>
+              <span id="typing-indicator" class="typing-indicator hidden" aria-live="polite">
+                <span class="typing-dots"><span></span><span></span><span></span></span>
+                <span class="typing-label">typing</span>
+              </span>
+            </div>
+          </div>
+          <div class="chat-header-actions">
+            <button type="button" id="header-view-toggle-btn" class="view-toggle-pill header-view-toggle" title="Switch to receiver view" aria-label="Switch to receiver view">
+              <span class="pill-track"><span class="pill-thumb"></span></span>
+              <span class="toggle-label">Sender</span>
+            </button>
+            <button type="button" id="chat-search-btn" class="icon-btn header-action-btn" aria-label="Search in chat" title="Search" aria-expanded="false" aria-controls="chat-search-bar">
+              <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            </button>
+            <div class="wallpaper-trigger-wrap">
+            <button type="button" id="chat-wallpaper-btn" class="icon-btn header-action-btn" aria-label="Chat wallpaper" title="Wallpaper">
+              <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+            </button>
+            <div id="wallpaper-popover" class="wallpaper-popover hidden" role="dialog" aria-label="Choose chat wallpaper">
+              <span class="wallpaper-popover-title">Wallpaper</span>
+              <div class="wallpaper-picker wallpaper-picker-compact" role="listbox" aria-label="Chat wallpaper">
+                <button type="button" class="wallpaper-option" data-wallpaper="default" aria-selected="false" aria-label="Default pattern">
+                  <span class="wallpaper-thumb wallpaper-thumb-default"></span>
+                  <span class="wallpaper-name">Default</span>
+                </button>
+                <button type="button" class="wallpaper-option" data-wallpaper="dots" aria-selected="false" aria-label="Dots pattern">
+                  <span class="wallpaper-thumb wallpaper-thumb-dots"></span>
+                  <span class="wallpaper-name">Dots</span>
+                </button>
+                <button type="button" class="wallpaper-option" data-wallpaper="gradient" aria-selected="false" aria-label="Gradient mesh">
+                  <span class="wallpaper-thumb wallpaper-thumb-gradient"></span>
+                  <span class="wallpaper-name">Gradient</span>
+                </button>
+              </div>
+            </div>
+            </div>
+            <button type="button" id="voice-call-btn" class="icon-btn header-call-btn" aria-label="Voice call" title="Voice call">
+              <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+            </button>
+            <button type="button" id="video-call-btn" class="icon-btn header-call-btn" aria-label="Video call" title="Video call">
+              <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <div id="chat-search-bar" class="chat-search-bar hidden" aria-live="polite">
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="search" id="chat-search-input" placeholder="Search in this chat…" aria-label="Search messages in chat" autocomplete="off">
+          <span id="chat-search-meta" class="chat-search-meta">Type to search</span>
+          <div class="chat-search-nav" aria-label="Message search navigation">
+            <button type="button" id="chat-search-prev-btn" class="icon-btn chat-search-step-btn" aria-label="Previous match" disabled>
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m7.41 14.59 4.58-4.58 4.59 4.58L18 13.17l-6.01-6-6 6z"/></svg>
+            </button>
+            <button type="button" id="chat-search-next-btn" class="icon-btn chat-search-step-btn" aria-label="Next match" disabled>
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="m7.41 8.59 4.58 4.58 4.59-4.58L18 10.01l-6.01 6-6-6z"/></svg>
+            </button>
+          </div>
+          <button type="button" id="chat-search-close-btn" class="icon-btn chat-search-close-btn" aria-label="Close message search">&times;</button>
+        </div>
+
+        <div class="messages-wrap">
+          <div id="messages-container" class="messages-container"></div>
+          <div id="messages-typing" class="messages-typing hidden" aria-live="polite">
+            <div class="typing-bubble">
+              <span class="typing-dots"><span></span><span></span><span></span></span>
+            </div>
+            <span class="messages-typing-label">typing…</span>
+          </div>
+          <button type="button" id="scroll-bottom-btn" class="scroll-bottom-btn hidden" aria-label="Scroll to bottom">
+            <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+            <span id="scroll-bottom-badge" class="scroll-bottom-badge hidden"></span>
+          </button>
+        </div>
+
+        <footer class="message-input-area">
+          <div id="reply-bar" class="reply-bar hidden" aria-live="polite">
+            <div class="reply-bar-content">
+              <span class="reply-bar-label">Reply to</span>
+              <span id="reply-bar-name" class="reply-bar-name"></span>
+              <span id="reply-bar-text" class="reply-bar-text"></span>
+            </div>
+            <button type="button" id="cancel-reply-btn" class="icon-btn" aria-label="Cancel reply">&times;</button>
+          </div>
+          <div id="edit-bar" class="edit-bar hidden" aria-live="polite">
+            <div class="edit-bar-content">
+              <span class="edit-bar-label">Edit message</span>
+            </div>
+            <button type="button" id="cancel-edit-btn" class="icon-btn" aria-label="Cancel edit">&times;</button>
+          </div>
+          <div id="voice-recording-bar" class="voice-recording-bar hidden" aria-live="polite">
+            <button type="button" id="voice-recording-cancel" class="voice-recording-cancel" aria-label="Cancel recording">&times;</button>
+            <span class="recording-dot" aria-hidden="true"></span>
+            <span id="voice-recording-timer" class="voice-recording-timer">0:00</span>
+            <span class="voice-recording-label">Recording…</span>
+            <button type="button" id="voice-recording-send" class="voice-recording-send" aria-label="Send voice message">
+              <svg width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+          </div>
+          <div class="message-input-row">
+            <button type="button" id="attach-btn" class="input-tool-btn" aria-label="Attach file" title="Attach file">
+              <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
+            </button>
+            <div class="message-input-wrap compose-pill" id="message-input-wrap">
+              <textarea id="message-input" rows="1" placeholder="Message" autocomplete="off" aria-label="Type a message" aria-describedby="compose-meta" maxlength="10000"></textarea>
+              <div class="compose-icons">
+                <button type="button" id="emoji-btn" class="input-tool-btn inline-tool" aria-label="Emoji" title="Emoji">😊</button>
+                <button type="button" id="sticker-btn" class="input-tool-btn inline-tool" aria-label="Stickers" title="Stickers">🎭</button>
+                <button type="button" id="action-btn" class="action-btn mic-mode" aria-label="Record voice">
+                  <span class="action-btn-icons" aria-hidden="true">
+                    <svg class="icon-mic" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>
+                    <svg class="icon-send" width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div id="compose-meta" class="compose-meta" aria-live="polite">
+            <span id="compose-count">0 / 10,000</span>
+          </div>
+          <div id="picker-panel" class="picker-panel hidden" role="dialog" aria-label="Emoji and stickers">
+            <div class="picker-tabs" role="tablist">
+              <button type="button" class="picker-tab active" data-tab="emoji" role="tab" aria-selected="true">Emoji</button>
+              <button type="button" class="picker-tab" data-tab="stickers" role="tab" aria-selected="false">Stickers</button>
+            </div>
+            <div class="picker-search">
+              <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+              <input type="search" id="picker-search" placeholder="Search emoji or stickers…" autocomplete="off" aria-label="Search picker">
+            </div>
+            <div id="emoji-picker" class="picker-grid emoji-picker" role="listbox" aria-label="Emoji picker"></div>
+            <div id="sticker-picker" class="picker-grid sticker-picker hidden" role="listbox" aria-label="Sticker picker"></div>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <!-- Settings panel -->
+  <div id="settings-panel" class="settings-panel hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <div id="settings-backdrop" class="settings-backdrop"></div>
+    <aside class="settings-drawer">
+      <header class="settings-header">
+        <h3 id="settings-title">Settings</h3>
+        <button type="button" id="close-settings-btn" class="icon-btn modal-close" aria-label="Close settings">&times;</button>
+      </header>
+      <div class="settings-body">
+        <div class="settings-user" id="settings-user-info">
+          <div class="settings-avatar-wrap">
+            <div class="settings-avatar-ring"></div>
+          </div>
+        </div>
+        <div class="settings-quick-actions" aria-label="Quick actions">
+          <button type="button" id="settings-new-chat-btn" class="settings-quick-action">
+            <span class="settings-quick-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            </span>
+            <span>New chat</span>
+          </button>
+          <button type="button" id="settings-shortcuts-btn" class="settings-quick-action">
+            <span class="settings-quick-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M20 5H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 12H4V7h16v10zM6 9h2v2H6V9zm3 0h2v2H9V9zm3 0h2v2h-2V9zm3 0h3v2h-3V9zM6 13h8v2H6v-2zm9 0h3v2h-3v-2z"/></svg>
+            </span>
+            <span>Shortcuts</span>
+          </button>
+        </div>
+        <div class="settings-section">
+          <span class="settings-section-label">Appearance</span>
+        <div class="settings-row">
+          <div class="settings-row-text">
+            <span id="night-mode-label">Night Mode</span>
+            <span class="settings-hint">Dark Telegram theme</span>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="night-mode-switch" aria-label="Night mode">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-text">
+            <span>Theme</span>
+            <span class="settings-hint">Quick toggle</span>
+          </div>
+          <button type="button" class="theme-toggle-btn icon-btn settings-theme-btn" aria-label="Switch to light mode" title="Light mode">
+            <svg class="icon-sun" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 0 0 0-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>
+            <svg class="icon-moon hidden" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+          </button>
+        </div>
+        <div class="settings-wallpaper-block">
+          <span class="settings-hint settings-wallpaper-label">Chat wallpaper</span>
+          <div id="wallpaper-picker" class="wallpaper-picker" role="listbox" aria-label="Chat wallpaper">
+            <button type="button" class="wallpaper-option" data-wallpaper="default" aria-selected="false" aria-label="Default pattern">
+              <span class="wallpaper-thumb wallpaper-thumb-default"></span>
+              <span class="wallpaper-name">Default</span>
+            </button>
+            <button type="button" class="wallpaper-option" data-wallpaper="dots" aria-selected="false" aria-label="Dots pattern">
+              <span class="wallpaper-thumb wallpaper-thumb-dots"></span>
+              <span class="wallpaper-name">Dots</span>
+            </button>
+            <button type="button" class="wallpaper-option" data-wallpaper="gradient" aria-selected="false" aria-label="Gradient mesh">
+              <span class="wallpaper-thumb wallpaper-thumb-gradient"></span>
+              <span class="wallpaper-name">Gradient</span>
+            </button>
+          </div>
+        </div>
+        </div>
+        <div class="settings-section">
+          <span class="settings-section-label">Chat</span>
+          <div class="settings-row">
+            <div class="settings-row-text">
+              <span>Receiver view</span>
+              <span class="settings-hint">Flip sent/received bubbles</span>
+            </div>
+            <button type="button" id="settings-view-toggle-btn" class="view-toggle-pill" title="Switch to receiver view" aria-label="Switch to receiver view">
+              <span class="pill-track"><span class="pill-thumb"></span></span>
+              <span class="toggle-label">Sender</span>
+            </button>
+          </div>
+        </div>
+        <div class="settings-section settings-section-danger">
+          <button type="button" id="settings-logout-btn" class="settings-logout-btn btn-danger">
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+            Log Out
+          </button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Notifications panel -->
+  <div id="notifications-panel" class="notifications-panel hidden" role="dialog" aria-modal="true" aria-labelledby="notifications-title">
+    <div id="notifications-backdrop" class="notifications-backdrop"></div>
+    <aside class="notifications-drawer">
+      <header class="notifications-header">
+        <h3 id="notifications-title">Notifications</h3>
+        <div class="notifications-header-actions">
+          <button type="button" id="mark-all-read-btn" class="notifications-mark-read" aria-label="Mark all notifications as read" hidden>
+            <span class="notifications-mark-read-label">Mark all read</span>
+            <span class="notifications-mark-read-spinner spinner" aria-hidden="true"></span>
+          </button>
+          <button type="button" id="close-notifications-btn" class="icon-btn modal-close" aria-label="Close notifications">&times;</button>
+        </div>
+      </header>
+      <div id="notifications-list" class="notifications-list" role="list"></div>
+    </aside>
+  </div>
+
+  <!-- Profile panel -->
+  <div id="profile-panel" class="profile-panel hidden" role="dialog" aria-modal="true" aria-labelledby="profile-title">
+    <div id="profile-backdrop" class="profile-backdrop"></div>
+    <aside class="profile-drawer">
+      <header class="profile-header">
+        <button type="button" id="profile-back-btn" class="icon-btn back-btn" aria-label="Back">
+          <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </button>
+        <h3 id="profile-title">Profile</h3>
+      </header>
+      <div class="profile-body" id="profile-body"></div>
+    </aside>
+  </div>
+
+  <!-- New Chat Modal -->
+  <div id="new-chat-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <header class="modal-header">
+        <h3 id="modal-title">New Chat</h3>
+        <button type="button" id="new-group-btn" class="btn-secondary btn-sm modal-alt-btn" title="Create group">New Group</button>
+        <button type="button" id="close-modal-btn" class="icon-btn modal-close" aria-label="Close">&times;</button>
+      </header>
+      <div id="new-chat-tabs" class="new-chat-tabs hidden">
+        <div class="group-create-row">
+          <input type="text" id="group-name-input" placeholder="Group name" aria-label="Group name" maxlength="80">
+          <button type="button" id="create-group-btn" class="btn-primary btn-sm" disabled>Create Group</button>
+        </div>
+        <p id="group-create-meta" class="group-create-meta" aria-live="polite">Name the group and select at least one contact.</p>
+      </div>
+      <div class="modal-search">
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input type="search" id="user-search" placeholder="Search contacts (Hassan, Sana, Omar…)" autocomplete="off">
+      </div>
+      <div id="user-list" class="user-list"></div>
+    </div>
+  </div>
+
+  <!-- Forward message modal -->
+  <div id="forward-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="forward-title">
+    <div class="modal-backdrop" data-close="forward-modal"></div>
+    <div class="modal-content">
+      <header class="modal-header">
+        <h3 id="forward-title">Forward to…</h3>
+        <button type="button" class="icon-btn modal-close" data-close="forward-modal" aria-label="Close">&times;</button>
+      </header>
+      <div id="forward-message-preview" class="forward-message-preview hidden" aria-live="polite"></div>
+      <div id="forward-chat-list" class="forward-chat-list"></div>
+    </div>
+  </div>
+
+  <!-- Delete message modal -->
+  <div id="delete-message-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="delete-message-title">
+    <div class="modal-backdrop" data-close="delete-message-modal"></div>
+    <div class="modal-content delete-message-content">
+      <header class="modal-header">
+        <h3 id="delete-message-title">Delete message?</h3>
+      </header>
+      <p class="delete-message-lead">Choose who should no longer see this message.</p>
+      <div class="delete-message-actions">
+        <button type="button" id="delete-for-everyone-btn" class="delete-scope-btn delete-scope-everyone">
+          <span class="delete-scope-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></span>
+          <span class="delete-scope-text">
+            <span class="delete-scope-title">Delete for everyone</span>
+            <span class="delete-scope-desc">Remove this message for all chat members</span>
+          </span>
+        </button>
+        <p id="delete-for-everyone-hint" class="delete-scope-hint hidden">Only the sender can delete for everyone</p>
+        <button type="button" id="delete-for-me-btn" class="delete-scope-btn delete-scope-me">
+          <span class="delete-scope-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>
+          <span class="delete-scope-text">
+            <span class="delete-scope-title">Delete for me</span>
+            <span class="delete-scope-desc">Hide this message on your devices only</span>
+          </span>
+        </button>
+      </div>
+      <footer class="delete-message-footer">
+        <button type="button" id="delete-message-cancel-btn" class="btn-secondary delete-cancel-btn">Cancel</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Chat info panel -->
+  <div id="chat-info-panel" class="chat-info-panel hidden" role="dialog" aria-modal="true" aria-labelledby="chat-info-title">
+    <div class="chat-info-backdrop" id="chat-info-backdrop"></div>
+    <aside class="chat-info-drawer">
+      <header class="chat-info-header">
+        <button type="button" id="close-chat-info-btn" class="icon-btn back-btn" aria-label="Close chat info">
+          <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </button>
+        <h3 id="chat-info-title">Chat Info</h3>
+      </header>
+      <div class="chat-info-profile" id="chat-info-profile"></div>
+      <div class="chat-info-actions">
+        <button type="button" id="chat-info-pin-btn" class="chat-info-action-btn" data-action="pin">
+          <span class="chat-info-action-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg></span>
+          <span class="chat-info-action-label">Pin chat</span>
+        </button>
+        <button type="button" id="chat-info-mute-btn" class="chat-info-action-btn" data-action="mute">
+          <span class="chat-info-action-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></span>
+          <span class="chat-info-action-label">Mute</span>
+        </button>
+        <button type="button" id="chat-info-archive-btn" class="chat-info-action-btn" data-action="archive">
+          <span class="chat-info-action-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.16.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM6.24 5h11.52l.81 1H5.43l.81-1zM5 19V8h14v11H5z"/></svg></span>
+          <span class="chat-info-action-label">Archive</span>
+        </button>
+        <button type="button" id="chat-info-voice-call-btn" class="chat-info-action-btn mobile-call-btn" data-action="voice">
+          <span class="chat-info-action-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg></span>
+          <span class="chat-info-action-label">Voice call</span>
+        </button>
+        <button type="button" id="chat-info-video-call-btn" class="chat-info-action-btn mobile-call-btn" data-action="video">
+          <span class="chat-info-action-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></span>
+          <span class="chat-info-action-label">Video call</span>
+        </button>
+      </div>
+      <div class="chat-info-encryption" id="chat-info-encryption">
+        <h4>Encryption</h4>
+        <p class="chat-info-e2e-status" id="chat-info-e2e-status">Messages are secured with end-to-end encryption</p>
+        <button type="button" id="chat-info-e2e-btn" class="chat-info-action-btn chat-info-e2e-toggle">
+          <span class="chat-info-action-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></span>
+          <span class="chat-info-action-label">Encryption enabled</span>
+        </button>
+      </div>
+      <div class="chat-info-section" id="chat-info-shared-section">
+        <h4>Shared Media</h4>
+        <div id="chat-info-shared-media" class="chat-info-shared-media"></div>
+      </div>
+      <div class="chat-info-section hidden" id="chat-info-permissions-section">
+        <h4>Group Permissions</h4>
+        <div id="chat-info-permissions"></div>
+      </div>
+      <div class="chat-info-members">
+        <div class="chat-info-members-header">
+          <h4>Members</h4>
+          <button type="button" id="chat-info-add-member-btn" class="chat-info-link-btn hidden">+ Add member</button>
+        </div>
+        <div id="chat-info-members-list" class="chat-info-members-list"></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Message context menu -->
+  <div id="msg-context-menu" class="context-menu hidden" role="menu">
+    <button type="button" class="context-menu-item context-menu-item-react" data-action="react" role="menuitem">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+      React
+    </button>
+    <button type="button" class="context-menu-item" data-action="copy" role="menuitem">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+      Copy
+    </button>
+    <button type="button" class="context-menu-item" data-action="reply" role="menuitem">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
+      Reply
+    </button>
+    <button type="button" class="context-menu-item" data-action="edit" role="menuitem">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>
+      Edit
+    </button>
+    <button type="button" class="context-menu-item" data-action="forward" role="menuitem">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+      Forward
+    </button>
+    <button type="button" class="context-menu-item danger" data-action="delete" role="menuitem">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+      Delete
+    </button>
+  </div>
+
+  <!-- Floating reaction picker -->
+  <div id="reaction-picker" class="reaction-picker hidden" role="toolbar" aria-label="Quick reactions"></div>
+
+  <!-- Call overlay -->
+  <div id="call-overlay" class="call-overlay hidden" role="dialog" aria-modal="true" aria-label="Call in progress">
+    <div class="call-overlay-backdrop"></div>
+    <div class="call-screen">
+      <p class="call-type-label">Voice call (Demo)</p>
+      <div class="call-avatar-wrap">
+        <div class="call-pulse call-pulse-1"></div>
+        <div class="call-pulse call-pulse-2"></div>
+        <div class="call-pulse call-pulse-3"></div>
+        <div class="call-avatar avatar"></div>
+      </div>
+      <h2 class="call-name">Contact</h2>
+      <p class="call-status">Calling… (Demo)</p>
+      <div class="call-controls">
+        <button type="button" id="call-mute-btn" class="call-control-btn" aria-label="Mute">
+          <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>
+        </button>
+        <button type="button" id="call-end-btn" class="call-control-btn end-call" aria-label="End call">
+          <svg width="28" height="28" viewBox="0 0 24 24"><path fill="currentColor" d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.996.996 0 0 1 0-1.41l2.83-2.83a.996.996 0 0 1 1.41 0l1.85 1.85c.28.28.67.28.95 0 .73-.79 1.36-1.68 1.85-2.66.16-.33.51-.56.9-.56h3.1c.47-1.45.72-3 .72-4.6 0-4.42-3.58-8-8-8s-8 3.58-8 8 3.58 8 8 8z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Keyboard shortcuts -->
+  <div id="shortcuts-panel" class="shortcuts-panel hidden" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
+    <div id="shortcuts-backdrop" class="shortcuts-backdrop"></div>
+    <div class="shortcuts-card">
+      <header class="shortcuts-header">
+        <h3 id="shortcuts-title">Keyboard shortcuts</h3>
+        <button type="button" id="shortcuts-close-btn" class="icon-btn modal-close" aria-label="Close shortcuts">&times;</button>
+      </header>
+      <ul id="shortcuts-list" class="shortcuts-list"></ul>
+      <p class="shortcuts-hint">Press <kbd>Ctrl+/</kbd> anytime to open this panel</p>
+    </div>
+  </div>
+
+  <input type="file" id="file-input" class="file-input-hidden" accept="image/*,.pdf,.doc,.docx,.txt,.zip" aria-hidden="true" tabindex="-1">
+  <input type="file" id="profile-photo-input" class="file-input-hidden" accept="image/*" aria-hidden="true" tabindex="-1">
+
+  <button type="button" id="theme-toggle-top" class="theme-toggle-btn icon-btn" aria-label="Toggle theme" title="Dark mode">
+    <svg class="icon-sun" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 0 0 0-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>
+    <svg class="icon-moon hidden" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+  </button>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
