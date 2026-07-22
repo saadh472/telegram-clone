@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'telegram-clone-static-v20260722-rebuild';
+const STATIC_CACHE = 'telegram-clone-static-v20260722-dummy-chats';
 const CORE_ASSETS = [
   './',
   './index.html',

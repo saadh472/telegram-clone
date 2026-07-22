@@ -79,6 +79,32 @@ let connectivityListenersReady = false;
 let chatListFocusIndex = -1;
 let messageDeltaPolls = 0;
 
+async function openChatFromRoute(chatId) {
+  if (chatState.activeChatId === chatId) return;
+  if (chatState.chats.some((chat) => chat.id === chatId)) {
+    openChat(chatId, { fromRoute: true });
+    return;
+  }
+
+  await loadChats(false, { silent: true });
+  if (chatState.chats.some((chat) => chat.id === chatId)) {
+    openChat(chatId, { fromRoute: true });
+    return;
+  }
+
+  const fallback = chatState.chats[0];
+  if (fallback) {
+    navigate({ name: 'chat', chatId: fallback.id }, { replace: true });
+    return;
+  }
+
+  clearRouteHash();
+  hideActiveChatPanel();
+  clearActiveChat();
+  setInputAreaEnabled(false);
+  renderChatList(uiState.chatSearchQuery, openChat, { force: true });
+}
+
 function draftsStorageKey() {
   return `${DRAFTS_KEY_PREFIX}${authState.user?.id || 'guest'}`;
 }
@@ -226,10 +252,9 @@ export function onShowApp() {
   initRouter();
   setRouterHandlers({
     onChat: (chatId) => {
-      if (chatState.activeChatId === chatId) return;
-      const chat = chatState.chats.find((c) => c.id === chatId);
-      if (chat) openChat(chatId, { fromRoute: true });
-      else loadChats().then(() => openChat(chatId, { fromRoute: true }));
+      openChatFromRoute(chatId).catch(() => {
+        showToast('Could not open chat', 'error');
+      });
     },
     onSettings: () => { if (!isSettingsOpen()) openSettingsPanel({ fromRoute: true }); },
     onProfile: () => { if (!isProfileOpen()) openProfilePage({ from: 'sidebar', fromRoute: true }); },

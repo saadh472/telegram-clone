@@ -140,41 +140,7 @@ BULK_CONTACTS: list[tuple[str, str, str]] = [
     for i, (username, display_name) in enumerate(_BULK_CONTACT_RAW)
 ]
 
-# New private chats for saad with bulk contacts (existing 9 private + 4 group chats stay intact)
-_BULK_CHAT_CONTACTS: list[tuple[str, list[tuple[str, str]]]] = [
-    ("tariq", [
-        ("tariq", "Assalam Saad bhai, project demo kab hai?"),
-        ("saad", "Kal InshaAllah — backend seeding complete kar raha hoon."),
-    ]),
-    ("kamran", [
-        ("kamran", "Bro MVC folder structure share kar do."),
-        ("saad", "Backend controllers/services alag hain — README dekho."),
-    ]),
-    ("amina", [
-        ("amina", "Saad, FST document ka link bhej do please."),
-        ("saad", "Group drive pe upload hai — check karo."),
-    ]),
-    ("faisal", [
-        ("faisal", "SQL Server connection string theek hai?"),
-        ("saad", "Haan, Windows Auth + pyodbc chal raha hai."),
-    ]),
-    ("iqra", [
-        ("iqra", "Frontend dark theme ka code kahan hai?"),
-        ("saad", "frontend/js/theme.js — wahan toggle hai."),
-    ]),
-    ("nadeem", [
-        ("nadeem", "Kal quiz hai yaad hai?"),
-        ("saad", "Haan, microservices wala topic revise kar lo."),
-    ]),
-    ("saima", [
-        ("saima", "Notes mil gaye — shukriya!"),
-        ("saad", "Khush raho, koi baat ho to batana."),
-    ]),
-    ("rizwan", [
-        ("rizwan", "Postman collection bhej do API test ke liye."),
-        ("saad", "Abhi bhejta hoon group mein."),
-    ]),
-]
+DEMO_CHAT_SEED_VERSION = "dummy-chats-20260722-v1"
 
 
 def _utc_now() -> datetime:
@@ -273,6 +239,16 @@ def ensure_schema(cursor: pyodbc.Cursor) -> None:
         """
         IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'idx_chat_members_user')
         CREATE INDEX idx_chat_members_user ON chat_members(user_id)
+        """
+    )
+    cursor.execute(
+        """
+        IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'app_metadata')
+        CREATE TABLE app_metadata (
+          meta_key NVARCHAR(100) NOT NULL PRIMARY KEY,
+          meta_value NVARCHAR(500) NOT NULL,
+          updated_at DATETIME2 NOT NULL DEFAULT GETUTCDATE()
+        )
         """
     )
     _ensure_message_columns(cursor)
@@ -527,6 +503,53 @@ def migrate_legacy_demo_users(cursor: pyodbc.Cursor) -> bool:
     return True
 
 
+def _metadata_value(cursor: pyodbc.Cursor, key: str) -> str | None:
+    cursor.execute("SELECT meta_value FROM app_metadata WHERE meta_key = ?", key)
+    row = cursor.fetchone()
+    return str(row[0]) if row else None
+
+
+def _set_metadata(cursor: pyodbc.Cursor, key: str, value: str) -> None:
+    cursor.execute(
+        """
+        MERGE app_metadata AS target
+        USING (SELECT ? AS meta_key, ? AS meta_value) AS source
+        ON target.meta_key = source.meta_key
+        WHEN MATCHED THEN
+          UPDATE SET meta_value = source.meta_value, updated_at = GETUTCDATE()
+        WHEN NOT MATCHED THEN
+          INSERT (meta_key, meta_value) VALUES (source.meta_key, source.meta_value);
+        """,
+        key,
+        value,
+    )
+
+
+def _delete_chats_for_user(cursor: pyodbc.Cursor, user_id: int) -> int:
+    cursor.execute("SELECT chat_id FROM chat_members WHERE user_id = ?", user_id)
+    chat_ids = [int(row[0]) for row in cursor.fetchall()]
+    if not chat_ids:
+        return 0
+
+    placeholders = ",".join("?" * len(chat_ids))
+    cursor.execute(f"DELETE FROM message_hidden WHERE chat_id IN ({placeholders})", *chat_ids)
+    cursor.execute(f"DELETE FROM messages WHERE chat_id IN ({placeholders})", *chat_ids)
+    cursor.execute(f"DELETE FROM chat_members WHERE chat_id IN ({placeholders})", *chat_ids)
+    cursor.execute(f"DELETE FROM chats WHERE id IN ({placeholders})", *chat_ids)
+    return len(chat_ids)
+
+
+def reset_demo_chats_if_needed(cursor: pyodbc.Cursor, saad_id: int) -> None:
+    """Reset Saad's demo conversations once per seed version."""
+    metadata_key = "demo_chat_seed_version"
+    if _metadata_value(cursor, metadata_key) == DEMO_CHAT_SEED_VERSION:
+        return
+
+    removed = _delete_chats_for_user(cursor, saad_id)
+    _set_metadata(cursor, metadata_key, DEMO_CHAT_SEED_VERSION)
+    print(f"Demo chats reset: removed {removed} existing chats for saad.")
+
+
 def _find_private_chat(cursor: pyodbc.Cursor, u1: int, u2: int) -> int | None:
     cursor.execute(
         """
@@ -618,132 +641,87 @@ def _ensure_group_chat(
 
 
 def ensure_demo_chats(cursor: pyodbc.Cursor, user_ids: dict[str, int]) -> None:
-    """Create saad's demo chats and sample messages if missing."""
+    """Create Saad's fresh dummy chats and sample messages if missing."""
     saad_id = user_ids["saad"]
     now = _utc_now()
 
     def uid(name: str) -> int:
         return user_ids[name]
 
-    # ── Private chats ──────────────────────────────────────────────────────
-    _ensure_private_chat(cursor, saad_id, uid("ahmed"), [
-        (uid("ahmed"), "Assalam o Alaikum Saad! Kaisay ho?", now - timedelta(hours=2)),
-        (saad_id, "Walaikum Assalam Ahmed bhai, Alhamdulillah theek hoon.", now - timedelta(hours=2) + timedelta(minutes=3)),
-        (uid("ahmed"), "SCD assignment ka kaam ho gaya?", now - timedelta(hours=1, minutes=55)),
-        (saad_id, "Haan, Telegram clone Flask + SQL Server pe bana raha hoon.", now - timedelta(hours=1, minutes=50)),
-    ])
+    reset_demo_chats_if_needed(cursor, saad_id)
 
-    _ensure_private_chat(cursor, saad_id, uid("fatima"), [
-        (uid("fatima"), "Saad, presentation slides ready hain?", now - timedelta(hours=4)),
-        (saad_id, "Almost done — MVC architecture slide baqi hai.", now - timedelta(hours=3, minutes=45)),
-        (uid("fatima"), "Shukriya! Kal class mein discuss karte hain.", now - timedelta(hours=3, minutes=40)),
-    ])
+    private_chats: list[tuple[str, list[tuple[str, str, timedelta]]]] = [
+        ("amina", [
+            ("amina", "Hi Saad, this is a fresh dummy conversation for testing the new UI.", timedelta(minutes=42)),
+            ("saad", "Perfect. The sidebar preview should now show clean text only.", timedelta(minutes=39)),
+            ("amina", "Looks good on my laptop screen.", timedelta(minutes=34)),
+        ]),
+        ("ahmed", [
+            ("ahmed", "Can you review the new message bubble spacing?", timedelta(hours=1, minutes=22)),
+            ("saad", "Yes, the bubbles feel much cleaner after the reset.", timedelta(hours=1, minutes=18)),
+            ("ahmed", "Great. Keep this chat for quick visual QA.", timedelta(hours=1, minutes=10)),
+        ]),
+        ("hassan", [
+            ("hassan", "Dummy chat added. No old voice preview should appear now.", timedelta(hours=2, minutes=8)),
+            ("saad", "Exactly. This should keep the chat list readable.", timedelta(hours=2, minutes=2)),
+        ]),
+        ("hira", [
+            ("hira", "This one tests a longer sidebar preview so we can confirm truncation stays smooth on small screens.", timedelta(hours=3, minutes=15)),
+            ("saad", "Nice. It should stay on one clean line without pushing the card height.", timedelta(hours=3, minutes=5)),
+        ]),
+        ("omar", [
+            ("omar", "Keyboard shortcuts, search, and route fallback are ready for demo testing.", timedelta(hours=5, minutes=20)),
+            ("saad", "I will test those after refreshing the deployed link.", timedelta(hours=5, minutes=8)),
+        ]),
+        ("iqra", [
+            ("iqra", "Dark mode dummy chat is ready.", timedelta(days=1, minutes=16)),
+            ("saad", "Thanks. The same messages should look balanced in light mode too.", timedelta(days=1, minutes=5)),
+        ]),
+    ]
 
-    _ensure_private_chat(cursor, saad_id, uid("usman"), [
-        (uid("usman"), "Database section SSMS pe complete kar liya?", now - timedelta(hours=6)),
-        (saad_id, "Yes bro, TelegramClone database chal rahi hai.", now - timedelta(hours=5, minutes=50)),
-        (uid("usman"), "Mashallah, kal demo dikha dena.", now - timedelta(hours=5, minutes=45)),
-    ])
+    for contact_username, message_specs in private_chats:
+        _ensure_private_chat(cursor, saad_id, uid(contact_username), [
+            (
+                saad_id if sender_username == "saad" else uid(sender_username),
+                content,
+                now - age,
+            )
+            for sender_username, content, age in message_specs
+        ])
 
-    _ensure_private_chat(cursor, saad_id, uid("ayesha"), [
-        (uid("ayesha"), "Saad bhai, OST endpoints document kar liye?", now - timedelta(hours=8)),
-        (saad_id, "Haan Ayesha, auth aur chat controllers done hain.", now - timedelta(hours=7, minutes=50)),
-        (uid("ayesha"), "Zabardast! Kal submit kar dete hain.", now - timedelta(hours=7, minutes=45)),
-    ])
+    group_chats: list[tuple[str, list[str], list[tuple[str, str, timedelta]]]] = [
+        ("UI Polish Team", ["saad", "fatima", "usman", "ayesha", "hamza"], [
+            ("fatima", "Dummy group created for final UI checks.", timedelta(minutes=18)),
+            ("usman", "Sidebar cards and unread badges are easier to scan now.", timedelta(minutes=14)),
+            ("saad", "Good. Keep the newest group near the top for screenshots.", timedelta(minutes=9)),
+        ]),
+        ("QA Testing Room", ["saad", "bilal", "sana", "imran", "zainab"], [
+            ("bilal", "Testing empty states, long text, and mobile widths today.", timedelta(hours=4, minutes=35)),
+            ("sana", "I checked the composer after the old chats were removed.", timedelta(hours=4, minutes=22)),
+            ("saad", "Great. This dummy set should be stable for release review.", timedelta(hours=4, minutes=10)),
+        ]),
+        ("Product Launch Chat", ["saad", "maryam", "kamran", "faisal", "tariq"], [
+            ("kamran", "The demo data now looks clean and professional.", timedelta(days=1, hours=2)),
+            ("maryam", "Perfect for showing the app without old test noise.", timedelta(days=1, hours=1, minutes=45)),
+            ("saad", "Yes, the chat list finally feels fresh.", timedelta(days=1, hours=1, minutes=30)),
+        ]),
+        ("Family Demo", ["saad", "maryam", "zainab", "sana"], [
+            ("maryam", "Family demo chat added for layout variety.", timedelta(days=2, hours=2)),
+            ("zainab", "The conversation cards should stay clear and readable.", timedelta(days=2, hours=1, minutes=45)),
+            ("saad", "Done. This replaces the old seeded family messages.", timedelta(days=2, hours=1, minutes=30)),
+        ]),
+    ]
 
-    _ensure_private_chat(cursor, saad_id, uid("hassan"), [
-        (uid("hassan"), "Saad bhai, kal cricket match dekho ge?", now - timedelta(hours=1)),
-        (saad_id, "Haan Hassan, Pakistan vs India — InshaAllah!", now - timedelta(minutes=55)),
-        (uid("hassan"), DEMO_PHOTO_CONTENT, now - timedelta(minutes=50)),
-        (saad_id, "Wah, kitna acha view hai!", now - timedelta(minutes=45)),
-        (uid("hassan"), "Stadium mein milte hain phir.", now - timedelta(minutes=40)),
-    ])
-
-    _ensure_private_chat(cursor, saad_id, uid("sana"), [
-        (uid("sana"), "Assalam Saad! Notes share kar do please.", now - timedelta(hours=3)),
-        (saad_id, "Bhej diye hain — check karo.", now - timedelta(hours=2, minutes=50)),
-        (uid("sana"), "Shukriya jazakAllah!", now - timedelta(hours=2, minutes=45)),
-    ])
-
-    _ensure_private_chat(cursor, saad_id, uid("omar"), [
-        (uid("omar"), "Bro API testing kaise kar rahe ho?", now - timedelta(days=1)),
-        (saad_id, "Postman se, aur frontend localhost:5500 pe.", now - timedelta(days=1) + timedelta(minutes=10)),
-        (uid("omar"), DEMO_VOICE_CONTENT, now - timedelta(days=1) + timedelta(minutes=20)),
-        (saad_id, "Sun liya — theek suggestion hai.", now - timedelta(days=1) + timedelta(minutes=25)),
-    ])
-
-    _ensure_private_chat(cursor, saad_id, uid("hira"), [
-        (uid("hira"), "Saad, group project mein frontend tum handle karoge?", now - timedelta(days=2)),
-        (saad_id, "Haan Hira, main JS MVC bana raha hoon.", now - timedelta(days=2) + timedelta(hours=1)),
-        (uid("hira"), "Perfect! CSS Telegram jaisa rakho.", now - timedelta(days=2) + timedelta(hours=2)),
-        (saad_id, "Done — dark/light theme bhi hai.", now - timedelta(days=2) + timedelta(hours=3)),
-    ])
-
-    _ensure_private_chat(cursor, saad_id, uid("imran"), [
-        (uid("imran"), "Assignment submit ho gaya?", now - timedelta(days=3)),
-        (saad_id, "Abhi finalize kar raha hoon.", now - timedelta(days=3) + timedelta(hours=2)),
-        (uid("imran"), "Deadline Friday hai yaad rakhna.", now - timedelta(days=3) + timedelta(hours=4)),
-    ])
-
-    # ── Group chats ────────────────────────────────────────────────────────
-    _ensure_group_chat(cursor, "University Friends", [
-        saad_id, uid("ahmed"), uid("fatima"), uid("usman"), uid("ayesha"), uid("hamza"), uid("zainab"),
-    ], [
-        (uid("hamza"), "Assalam everyone! Assignment 05 deadline next week hai.", now - timedelta(days=1)),
-        (uid("ayesha"), "Microservices aur MVC dono cover karna hai.", now - timedelta(days=1) + timedelta(minutes=8)),
-        (uid("zainab"), "Main FST specification likh rahi hoon.", now - timedelta(days=1) + timedelta(minutes=15)),
-        (saad_id, "Group mein sab share kar lena, InshaAllah sab set ho jayega.", now - timedelta(days=1) + timedelta(minutes=25)),
-        (uid("ahmed"), "Chalo kal library mein milte hain.", now - timedelta(days=1) + timedelta(minutes=40)),
-    ])
-
-    _ensure_group_chat(cursor, "SCD Assignment Group", [
-        saad_id, uid("ahmed"), uid("fatima"), uid("usman"), uid("hamza"),
-    ], [
-        (uid("hamza"), "Controllers aur services alag rakho — MVC clear hona chahiye.", now - timedelta(hours=5)),
-        (uid("fatima"), "Main SST document update kar rahi hoon.", now - timedelta(hours=4, minutes=50)),
-        (saad_id, "Backend seeder bhi update kar diya — ab 13 chats hain.", now - timedelta(hours=4, minutes=40)),
-        (uid("usman"), "SSMS verify query bhej do group mein.", now - timedelta(hours=4, minutes=30)),
-    ])
-
-    _ensure_group_chat(cursor, "Cricket Fans PK", [
-        saad_id, uid("bilal"), uid("omar"), uid("hassan"), uid("imran"),
-    ], [
-        (uid("bilal"), "Pakistan ne match jeet liya! 🎉", now - timedelta(hours=12)),
-        (uid("omar"), "Babar ka century dekha?", now - timedelta(hours=11, minutes=50)),
-        (uid("hassan"), DEMO_PHOTO_CONTENT, now - timedelta(hours=11, minutes=40)),
-        (saad_id, "Mashallah, kya performance thi!", now - timedelta(hours=11, minutes=30)),
-        (uid("imran"), "Agle match ka plan banao.", now - timedelta(hours=11, minutes=20)),
-    ])
-
-    _ensure_group_chat(cursor, "Family Group", [
-        saad_id, uid("maryam"), uid("zainab"), uid("sana"),
-    ], [
-        (uid("maryam"), "Assalam everyone! Jummah Mubarak.", now - timedelta(days=1)),
-        (uid("zainab"), "Ammi ne biryani banayi hai — aa jao.", now - timedelta(days=1) + timedelta(minutes=30)),
-        (uid("sana"), "Main 6 baje aa rahi hoon.", now - timedelta(days=1) + timedelta(minutes=45)),
-        (saad_id, "Main thori der baad aata hoon, assignment submit karni hai.", now - timedelta(days=1) + timedelta(hours=1)),
-    ])
-
-    _ensure_bulk_contact_chats(cursor, saad_id, user_ids, now)
-
-
-def _ensure_bulk_contact_chats(
-    cursor: pyodbc.Cursor,
-    saad_id: int,
-    user_ids: dict[str, int],
-    now: datetime,
-) -> None:
-    """Private chats with new bulk contacts (does not touch existing saad chats)."""
-    for contact_username, message_specs in _BULK_CHAT_CONTACTS:
-        other_id = user_ids.get(contact_username)
-        if not other_id:
-            continue
-        messages: list[tuple[int, str, datetime]] = []
-        for sender_name, content in message_specs:
-            sender_id = saad_id if sender_name == "saad" else user_ids[sender_name]
-            offset = timedelta(minutes=len(messages) * 5)
-            messages.append((sender_id, content, now - timedelta(hours=10) + offset))
-        _ensure_private_chat(cursor, saad_id, other_id, messages)
+    for chat_name, member_names, message_specs in group_chats:
+        member_ids = [uid(name) for name in member_names]
+        _ensure_group_chat(cursor, chat_name, member_ids, [
+            (
+                saad_id if sender_username == "saad" else uid(sender_username),
+                content,
+                now - age,
+            )
+            for sender_username, content, age in message_specs
+        ])
 
 
 def _upgrade_placeholder_media(cursor: pyodbc.Cursor) -> None:

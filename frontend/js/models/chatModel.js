@@ -13,7 +13,7 @@ let messagesAbort = null;
 let chatsAbort = null;
 
 const chatsMemoryCache = { userId: null, data: null, ts: 0 };
-const CHATS_LS_PREFIX = 'tg_chats_cache_';
+const CHATS_LS_PREFIX = 'tg_chats_cache_v2_';
 let chatsRefreshTimer = null;
 let chatsRefreshInFlight = false;
 
