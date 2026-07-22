@@ -1,0 +1,6 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Setup help
+    url: https://github.com/saadh472/telegram-clone#troubleshooting
+    about: Check the README troubleshooting table before opening a setup issue.
+

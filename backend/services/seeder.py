@@ -787,7 +787,8 @@ def seed_demo_data(cursor: pyodbc.Cursor) -> None:
 
 
 def initialize_database() -> None:
-    ensure_database_exists()
+    if not config.SKIP_DATABASE_CREATE:
+        ensure_database_exists()
     conn = DatabaseSingleton.get_instance().get_connection()
     try:
         conn.autocommit = False

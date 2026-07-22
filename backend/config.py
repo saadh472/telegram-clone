@@ -13,8 +13,10 @@ load_dotenv(_backend_dir / ".env")
 load_dotenv(_backend_dir.parent / ".env")
 
 HOST = os.getenv("FLASK_HOST", "0.0.0.0")
-PORT = int(os.getenv("FLASK_PORT", "3000"))
+PORT = int(os.getenv("PORT") or os.getenv("FLASK_PORT", "3000"))
 DEBUG = os.getenv("FLASK_DEBUG", "false").lower() == "true"
+SERVE_FRONTEND = os.getenv("SERVE_FRONTEND", "false").lower() == "true"
+FRONTEND_DIR = os.getenv("FRONTEND_DIR", str(_backend_dir.parent / "frontend"))
 
 _DEFAULT_JWT_SECRET = "change-me"
 JWT_SECRET = os.getenv("JWT_SECRET", _DEFAULT_JWT_SECRET)
@@ -31,6 +33,9 @@ SQL_INSTANCE = os.getenv(
     SQL_SERVER.split("\\")[1] if "\\" in SQL_SERVER else "SQLEXPRESS",
 )
 SQL_PORT = os.getenv("SQL_PORT", "")
+SQL_USER = os.getenv("SQL_USER", "")
+SQL_PASSWORD = os.getenv("SQL_PASSWORD", "")
+SKIP_DATABASE_CREATE = os.getenv("SKIP_DATABASE_CREATE", "false").lower() == "true"
 
 # Attachment limits — align with frontend/js/config.js (demo; large files may be slow)
 MAX_ATTACHMENT_BYTES = 1024 * 1024 * 1024  # 1 GB raw file

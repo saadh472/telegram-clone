@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 
 import config
@@ -47,6 +47,25 @@ def _cors_origins() -> list[str]:
     return merged
 
 
+def _register_frontend_routes(app: Flask) -> None:
+    frontend_dir = Path(config.FRONTEND_DIR).resolve()
+
+    @app.get("/")
+    def frontend_index():
+        return send_from_directory(frontend_dir, "index.html")
+
+    @app.get("/<path:path>")
+    def frontend_assets(path: str):
+        if path.startswith("api/"):
+            return jsonify({"error": "Not found"}), 404
+
+        requested = frontend_dir / path
+        if requested.is_file():
+            return send_from_directory(frontend_dir, path)
+
+        return send_from_directory(frontend_dir, "index.html")
+
+
 def create_app() -> Flask:
     app = Flask(__name__)
     # Allow large JSON media payloads (base64 attachments); align with config.MESSAGE_MEDIA_MAX_LENGTH
@@ -69,6 +88,9 @@ def create_app() -> Flask:
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(chat_bp, url_prefix="/api")
     app.register_blueprint(user_bp, url_prefix="/api")
+
+    if config.SERVE_FRONTEND:
+        _register_frontend_routes(app)
 
     @app.errorhandler(404)
     def not_found(_):

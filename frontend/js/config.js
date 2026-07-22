@@ -8,9 +8,20 @@ function resolveApiBase() {
   const override = normalizeApiBase(params.get('api') || window.TELEGRAM_API_BASE);
   if (override) return override;
 
-  const protocol = window.location.protocol === 'file:' ? 'http:' : window.location.protocol;
-  const host = window.location.hostname || '127.0.0.1';
-  return `${protocol}//${host}:3000/api`;
+  if (window.location.protocol === 'file:') {
+    return 'http://127.0.0.1:3000/api';
+  }
+
+  const { protocol, hostname, port, origin } = window.location;
+  const localHosts = ['localhost', '127.0.0.1', '0.0.0.0'];
+  const isLanHost = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(hostname);
+  const isLocalDevHost = localHosts.includes(hostname) || isLanHost;
+
+  if (isLocalDevHost && port && port !== '3000') {
+    return `${protocol}//${hostname}:3000/api`;
+  }
+
+  return `${origin}/api`;
 }
 
 export const API_BASE = resolveApiBase();

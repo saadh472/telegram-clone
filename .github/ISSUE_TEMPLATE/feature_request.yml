@@ -1,0 +1,34 @@
+name: Feature request
+description: Suggest a focused improvement.
+title: "Feature: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or user need
+      description: What user friction does this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Frontend
+        - Backend
+        - Database
+        - Documentation
+        - Tooling
+        - Other
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context
+

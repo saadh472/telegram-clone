@@ -1,167 +1,236 @@
 # Telegram Web Clone
 
-Telegram-style messaging web app built for **SCD Assignment 05**. Vanilla HTML/CSS/JS frontend with an MVC Flask API and Microsoft SQL Server persistence.
+[![Quality](https://github.com/saadh472/telegram-clone/actions/workflows/quality.yml/badge.svg)](https://github.com/saadh472/telegram-clone/actions/workflows/quality.yml)
+![Frontend](https://img.shields.io/badge/frontend-vanilla%20JS-f7df1e?logo=javascript&logoColor=111)
+![Backend](https://img.shields.io/badge/backend-Flask-000?logo=flask)
+![Database](https://img.shields.io/badge/database-SQL%20Server-cc2927?logo=microsoftsqlserver&logoColor=white)
+![Deploy](https://img.shields.io/badge/deploy-GitHub%20Pages%20%2B%20Docker-24292f?logo=github)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-## Tech stack
+A Telegram-inspired messaging application built with a vanilla HTML/CSS/JavaScript frontend, a Flask REST API, JWT authentication, and SQL Server persistence. The project demonstrates a complete MVC/layered architecture with private chats, groups, media-style messages, reactions, typing indicators, settings, and seeded demo data.
+
+> Educational portfolio project. Not affiliated with Telegram.
+
+## Highlights
+
+- Hash-routed single-page frontend using plain JavaScript modules
+- Flask REST API with controller/service/model/view separation
+- SQL Server bootstrap and demo seeding on backend startup
+- JWT auth with registration, login, logout, and protected routes
+- Private chats, group chats, replies, edits, soft delete, hide-for-me delete, forwarding, reactions, and typing indicators
+- Photo, file, sticker, and voice-message style content
+- Client-side preferences for pin, mute, archive, theme, wallpaper, privacy, and profile settings
+- Accessible, responsive messaging UI with loading, empty, error, and success states
+- Local launcher scripts for Windows development
+
+## Tech Stack
 
 | Layer | Technology |
-|-------|------------|
-| Frontend | HTML, CSS, vanilla JavaScript (MVC) |
-| Backend | Python Flask REST API |
-| Database | SQL Server Express (via `pyodbc` + ODBC Driver 17) |
-| Auth | JWT (Bearer token) |
+| --- | --- |
+| Frontend | HTML, CSS, vanilla JavaScript modules |
+| Frontend architecture | MVC-style models, views, controllers |
+| Backend | Python, Flask, Flask-CORS |
+| Backend architecture | Layered MVC: controllers, services, models, views |
+| Database | Microsoft SQL Server Express via `pyodbc` |
+| Auth | JWT bearer tokens |
+| Tooling | npm scripts, PowerShell checks, GitHub Actions |
 
-## Features
+## Quick Start
 
-- Login / register with JWT sessions
-- Private chats and group chats
-- Send, edit, delete, reply, and react to messages
-- Typing indicators (REST polling)
-- Photo, voice, and file attachments (demo storage in message content)
-- Pin / mute / archive preferences (client-side)
-- Client-side E2E demo (AES-GCM — labeled clearly; not Signal-grade)
-- Seeded demo data (~100 users, sample threads) on first backend start
+### Prerequisites
 
-## Prerequisites
+- Python 3.10+
+- Node.js LTS
+- SQL Server Express with Windows Authentication
+- Microsoft ODBC Driver 17 or 18 for SQL Server
 
-- **Python 3.10+**
-- **Node.js** (LTS) — used to serve the static frontend
-- **SQL Server Express** (Windows Authentication)
-- [**ODBC Driver 17 for SQL Server**](https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server)
+### Run on Windows
 
-## Setup
+```bat
+git clone https://github.com/saadh472/telegram-clone.git
+cd telegram-clone
+copy backend\.env.example backend\.env
+start.cmd
+```
 
-1. **Clone the repo**
+Open:
 
-   ```bash
-   git clone https://github.com/saadh472/telegram-clone.git
-   cd telegram-clone
-   ```
+```text
+http://127.0.0.1:5500
+```
 
-2. **Configure the database**
+Demo account:
 
-   ```bash
-   copy backend\.env.example backend\.env
-   ```
+| Username | Password |
+| --- | --- |
+| `saad` | `12345678` |
 
-   Edit `backend\.env` and set `SQL_SERVER` to the name shown in the SSMS Connect dialog (for example `YOUR-PC\SQLEXPRESS`).
+Other seeded demo users normally use `password123`.
 
-3. **Install dependencies** (or let `start.cmd` do this on first run)
+## Configuration
 
-   ```bash
-   pip install -r backend\requirements.txt
-   cd frontend && npm install && cd ..
-   ```
+Create `backend/.env` from `backend/.env.example` and adjust the SQL Server name shown in SSMS.
 
-4. **Start the app**
+```env
+SQL_SERVER=localhost\SQLEXPRESS
+DB_NAME=TelegramClone
+JWT_SECRET=change-me
+FLASK_HOST=0.0.0.0
+FLASK_PORT=3000
+FLASK_DEBUG=false
+```
 
-   Double-click **`start.cmd`**, or from a terminal:
+For shared demos, change `JWT_SECRET` before running the app.
 
-   ```bash
-   start.cmd
-   ```
+## Deploy Full Stack From GitHub
 
-   Useful flags:
+The full stack is deployable from this repo as one web service. In production, Flask serves both the frontend and the `/api` routes from the same URL.
 
-   | Command | Purpose |
-   |---------|---------|
-   | `start.cmd` | Checks prerequisites, installs deps if needed, starts API + UI |
-   | `start.cmd --fast` | Skip dependency install |
-   | `start.cmd --install` | Force pip + npm install |
-   | `stop.cmd` | Free ports 3000 and 5500 |
+GitHub itself does not run Flask apps on GitHub Pages. Use GitHub as the source repo, then deploy the full-stack service with Render or another Docker-capable host.
 
-5. Open **http://127.0.0.1:5500** (opened automatically by `start.cmd`).
+Recommended production split:
 
-> Always use `http://` — never open `frontend/index.html` via `file://` (the API will not connect).
+| Part | Deployment target |
+| --- | --- |
+| Frontend | Served by Flask from the same Render service |
+| Backend | Render Docker service from `render.yaml` and `backend/Dockerfile` |
+| Database | Cloud SQL Server/Azure SQL reachable by the backend |
 
-### Manual run
+Required setup:
 
-```bash
+1. Push this repo to GitHub.
+2. Create a hosted SQL Server database named `TelegramClone` or your preferred `DB_NAME`.
+3. Deploy the app on Render using the repo Blueprint (`render.yaml`).
+4. Set backend environment variables: `SQL_SERVER`, `DB_NAME`, `SQL_USER`, `SQL_PASSWORD`, and `SKIP_DATABASE_CREATE=true`.
+5. Open the Render URL. The app UI loads at `/` and the API runs at `/api`.
+
+Optional static-only frontend deployment is still available through GitHub Pages if you add repository variable `API_BASE_URL` and run `.github/workflows/deploy-pages.yml`.
+
+The frontend can also be pointed to any API temporarily:
+
+```text
+https://saadh472.github.io/telegram-clone/?api=https://your-backend.example.com/api
+```
+
+## Commands
+
+| Command | Purpose |
+| --- | --- |
+| `start.cmd` | Check prerequisites, install missing dependencies, start backend and frontend |
+| `start.cmd --fast` | Start without dependency installation |
+| `start.cmd --install` | Force reinstall Python and frontend dependencies |
+| `stop.cmd` | Stop local services on ports 3000 and 5500 |
+| `npm --prefix frontend run check` | Syntax-check frontend JavaScript modules |
+| `powershell -ExecutionPolicy Bypass -File scripts/check-repo.ps1` | Run repository quality checks |
+
+Manual run:
+
+```bat
 cd backend
 pip install -r requirements.txt
 python app.py
 
-cd frontend
+cd ..\frontend
 npm install
 npm start
 ```
 
+## URLs
+
 | Service | URL |
-|---------|-----|
-| App | http://127.0.0.1:5500 |
-| API | http://127.0.0.1:3000/api |
-| Health | http://127.0.0.1:3000/api/health |
+| --- | --- |
+| App | `http://127.0.0.1:5500` |
+| API | `http://127.0.0.1:3000/api` |
+| Health | `http://127.0.0.1:3000/api/health` |
 
-## Demo login
+Always open the frontend through `http://`; opening `frontend/index.html` directly with `file://` will not connect to the API.
 
-| Username | Password |
-|----------|----------|
-| **saad** | **12345678** |
+## Project Structure
 
-Other seeded users typically use password `password123` (see `backend/services/seeder.py`).
-
-## Project structure
-
-```
+```text
 telegram-clone/
-├── start.cmd                 # Launch backend + frontend
-├── stop.cmd                  # Stop services on ports 3000 / 5500
-├── frontend/                 # Static UI (MVC)
-│   ├── index.html
-│   ├── css/
-│   └── js/
-│       ├── models/
-│       ├── views/
-│       └── controllers/
-└── backend/                  # Flask API (MVC)
-    ├── .env.example
-    ├── app.py
-    ├── config.py
-    ├── controllers/
-    ├── models/
-    ├── views/
-    ├── services/
-    ├── database/             # SQL Server connection singleton
-    ├── sql/init.sql
-    ├── docs/                 # Assignment specs (FST / LST / OST / SST)
-    └── tests/
+|-- backend/
+|   |-- app.py
+|   |-- config.py
+|   |-- controllers/
+|   |-- database/
+|   |-- docs/
+|   |-- models/
+|   |-- services/
+|   |-- sql/
+|   |-- tests/
+|   `-- views/
+|-- frontend/
+|   |-- index.html
+|   |-- css/
+|   |-- js/
+|   |   |-- controllers/
+|   |   |-- models/
+|   |   `-- views/
+|   `-- scripts/
+|-- docs/
+|-- scripts/
+|-- start.cmd
+`-- stop.cmd
 ```
 
-## Architecture
+## Documentation
 
-Both sides follow **MVC**:
-
-- **Frontend:** models talk to the API; views render the UI; controllers wire user actions.
-- **Backend:** Flask blueprints/controllers handle HTTP; services hold business logic; models access SQL Server.
-
-Schema and seed data are applied on startup by `backend/services/seeder.py` (creates the `TelegramClone` database if missing). You can also run `backend/sql/init.sql` manually in SSMS.
-
-## Environment
-
-Create `backend/.env` from `backend/.env.example`:
-
-```env
-SQL_SERVER=YOUR-PC\SQLEXPRESS
-DB_NAME=TelegramClone
-JWT_SECRET=change-me
-FLASK_PORT=3000
-```
-
-The frontend resolves the API host from the page hostname (`frontend/js/config.js`), so LAN access via `http://YOUR-IP:5500` talks to `http://YOUR-IP:3000/api`.
+- [Architecture](docs/ARCHITECTURE.md)
+- [API reference](docs/API.md)
+- [Development guide](docs/DEVELOPMENT.md)
+- [Deployment guide](docs/DEPLOYMENT.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Changelog](CHANGELOG.md)
 
 ## Screenshots
 
-_Add screenshots of the login screen and chat UI here if desired._
+Add polished screenshots to `docs/assets/` and reference them here:
+
+```md
+![Login screen](docs/assets/login.png)
+![Chat screen](docs/assets/chat.png)
+```
+
+Recommended screenshots:
+
+- Login/register screen
+- Main chat view
+- Mobile layout
+- Settings/profile panel
+
+## Quality Checks
+
+GitHub Actions runs:
+
+- frontend dependency installation
+- JavaScript module syntax checks
+- backend Python syntax compilation
+
+Run the same checks locally:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/check-repo.ps1
+```
+
+## Known Constraints
+
+- SQL Server and an ODBC driver are required for the web version.
+- Media content is stored as message content for demonstration purposes.
+- Typing and chat updates use REST polling.
+- The E2E mode is an educational client-side demo, not a production-grade secure messaging protocol.
 
 ## Troubleshooting
 
 | Problem | Fix |
-|---------|-----|
-| Backend health check fails | Start SQL Server; set `SQL_SERVER` in `backend/.env`; install ODBC Driver 17 |
-| `EADDRINUSE` on 3000/5500 | Run `stop.cmd`, then `start.cmd` again |
-| Login / "Failed to fetch" | Open via http://127.0.0.1:5500 (not `file://`) |
-| Invalid credentials | Restart backend — demo user `saad` is reset to `12345678` on seed |
+| --- | --- |
+| Backend health check fails | Start SQL Server, install ODBC Driver 17/18, and verify `SQL_SERVER` in `backend/.env` |
+| `EADDRINUSE` on port 3000 or 5500 | Run `stop.cmd`, then start again |
+| Login shows "Failed to fetch" | Open `http://127.0.0.1:5500`, not `file://` |
+| Invalid demo credentials | Restart the backend so the seeder resets demo users |
+| LAN access does not connect | Add your frontend origin to `CORS_ORIGINS` in `backend/.env` |
 
-## Note
+## License
 
-University assignment project (SCD Assignment 05). Not affiliated with Telegram.
+Released under the [MIT License](LICENSE).

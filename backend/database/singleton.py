@@ -1,9 +1,9 @@
 """
-Singleton connection manager for Microsoft SQL Server (SSMS) via pyodbc.
+Singleton connection manager for Microsoft SQL Server via pyodbc.
 
 All users, chats, and messages are persisted in the TelegramClone database.
 Configure the server via SQL_SERVER in backend/.env (see .env.example).
-Auth: Windows Authentication (Trusted_Connection=yes)
+Auth: Windows Authentication locally, or SQL username/password in hosted environments.
 Driver: ODBC Driver 17 for SQL Server (preferred)
 """
 from __future__ import annotations
@@ -57,10 +57,15 @@ class DatabaseSingleton:
         raise RuntimeError("No SQL Server ODBC driver found. Install ODBC Driver 17+.")
 
     def _base_flags(self, driver: str, database: str) -> str:
+        auth = (
+            f"UID={config.SQL_USER};PWD={config.SQL_PASSWORD};"
+            if config.SQL_USER and config.SQL_PASSWORD
+            else f"Trusted_Connection={config.ODBC_TRUSTED_CONNECTION};"
+        )
         return (
             f"DRIVER={{{driver}}};"
             f"DATABASE={database};"
-            f"Trusted_Connection={config.ODBC_TRUSTED_CONNECTION};"
+            f"{auth}"
             f"Encrypt={config.ODBC_ENCRYPT};"
             f"TrustServerCertificate={config.ODBC_TRUST_CERT};"
         )
@@ -151,6 +156,11 @@ class DatabaseSingleton:
         try:
             cs = self.resolve_connection_string()
             safe = cs.replace("Trusted_Connection=yes", "Trusted_Connection=***")
+            safe = safe.replace("Trusted_Connection=no", "Trusted_Connection=***")
+            if config.SQL_USER:
+                safe = safe.replace(f"UID={config.SQL_USER};", "UID=***;")
+            if config.SQL_PASSWORD:
+                safe = safe.replace(f"PWD={config.SQL_PASSWORD};", "PWD=***;")
             return {
                 "server": config.SQL_SERVER,
                 "database": config.SQL_DATABASE,
