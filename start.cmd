@@ -134,7 +134,7 @@ findstr /B /C:"SQL_SERVER=localhost\SQLEXPRESS" "%ROOT%backend\.env" >nul 2>&1
 if not errorlevel 1 (
   echo   REMINDER: backend\.env still has default SQL_SERVER=localhost\SQLEXPRESS
   echo             If connection fails, open SSMS and copy your server name into .env
-  echo             ^(e.g. YOUR-PC\SQLEXPRESS^). Or run setup.cmd once.
+  echo             ^(e.g. YOUR-PC\SQLEXPRESS^).
 )
 echo.
 

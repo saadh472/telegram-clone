@@ -10,10 +10,6 @@ export function setUnauthorizedHandler(fn) {
 }
 
 export function formatBackendUnreachable() {
-  const desktopMode = new URLSearchParams(window.location.search).get('desktop') === '1';
-  if (desktopMode) {
-    return 'Cannot reach the local desktop backend. Restart the app and verify SQL Server is running.';
-  }
   const host = window.location.hostname || '127.0.0.1';
   return `Cannot reach backend. Run start.cmd and open http://${host}:5500 (not file://)`;
 }
