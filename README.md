@@ -50,10 +50,16 @@ The frontend polls REST endpoints for message and typing updates. On the backend
 
 ## Verify locally
 
-    npm --prefix frontend run check
-    python -m compileall -q backend
+The JavaScript syntax check uses Node.js 22 or newer. Run the Python checks with the virtual environment interpreter used in the quick start.
 
-With the app running at port 3000, run `python backend/tests/smoke_api.py` to check health, demo login, profile lookup, chat listing, and invalid JSON handling.
+    npm --prefix frontend run check
+    .\.venv\Scripts\python.exe -m compileall -q backend
+
+With the app running at port 3000, run the API smoke check.
+
+    .\.venv\Scripts\python.exe backend/tests/smoke_api.py
+
+It checks health, demo login, profile lookup, chat listing, and invalid JSON handling. On macOS or Linux, use .venv/bin/python for both Python commands.
 
 ## Demo limits
 
