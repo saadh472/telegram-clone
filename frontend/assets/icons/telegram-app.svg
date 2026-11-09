@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Telegram Web Clone">
+  <defs>
+    <linearGradient id="bg" x1="96" y1="64" x2="416" y2="448" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#61c5ff"/>
+      <stop offset="0.48" stop-color="#3390ec"/>
+      <stop offset="1" stop-color="#1769c2"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#0a4c92" flood-opacity="0.32"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="174" fill="#fff" opacity="0.12"/>
+  <path filter="url(#shadow)" fill="#fff" d="M128 260.8 382.6 153c15.8-6.7 29.7 8.8 22.2 24.1L291.7 404.5c-6.9 13.9-26.4 12.4-31.1-2.3l-31.9-98.7-90.7-31.2c-14.8-5.1-24.4-4.8-10-11.5Z"/>
+  <path fill="#d7efff" d="m228.7 303.5 125.7-101.1c6.5-5.2 13.8 3.3 8.1 9.3L259.6 320.5l1 81.7-31.9-98.7Z"/>
+</svg>

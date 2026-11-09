@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: telegram-clone-fullstack
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: FLASK_HOST
+        value: 0.0.0.0
+      - key: FLASK_DEBUG
+        value: false
+      - key: SERVE_FRONTEND
+        value: true
+      - key: FRONTEND_DIR
+        value: /app/frontend
+      - key: DB_ENGINE
+        value: sqlite
+      - key: SQLITE_DB_PATH
+        value: /app/data/telegram_clone.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: ""
