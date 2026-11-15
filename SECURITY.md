@@ -1,16 +1,21 @@
-# Security Policy
+# Security policy
 
-## Supported Scope
+This is a public educational portfolio project. The latest default-branch revision is the supported development version; older coursework snapshots are not maintained security releases.
 
-This is an educational messaging clone and portfolio project. Security fixes are welcome for the current `main` branch.
+## Report a vulnerability
 
-## Reporting a Vulnerability
+Please use [GitHub private vulnerability reporting](https://github.com/saadh472/telegram-clone/security/advisories/new) to send reproduction steps, affected paths, and impact. Do not publish credentials, personal records, or exploit details in a public issue. A response time is not guaranteed for this student-maintained project.
 
-Please do not post exploitable security details in a public issue. Instead, contact the repository owner privately through GitHub profile contact options, then open a minimal public issue after the fix is prepared if tracking is needed.
+## Safe demonstrations
 
-## Important Notes
+Use fictional records and dedicated demo accounts. Keep credentials in environment variables, runtime data outside source control, and databases backed up locally. Public source access does not grant access to a running application's records. Review the README's deployment limits before exposing a server.
 
-- Change `JWT_SECRET` before any shared or public deployment.
+Dependency updates and code scanning help identify issues; passing scans do not establish that the application is secure. Dependency changes still require review and the project's automated checks.
+
+## Messaging-specific limits
+
+- Set a unique `JWT_SECRET` before any shared or public deployment.
 - Do not commit `backend/.env` or real database connection strings.
-- The client-side E2E mode is a demo and should not be treated as Signal-grade secure messaging.
-- The demo stores attachment payloads in message content; avoid using real private files.
+- The experimental client-side encryption mode is a learning feature; it is not an audited secure messaging protocol.
+- Demo attachment payloads are stored in message content. Use fictional messages and non-private test files.
+

@@ -5,6 +5,10 @@
 
 A Telegram-inspired web app for private and group messaging. It pairs a plain JavaScript frontend with a layered Flask REST API and runs locally with SQLite or SQL Server.
 
+**Stack:** Python · Flask · JavaScript · HTML/CSS · SQLite · SQL Server · JWT
+
+[Quick start](#quick-start) · [API reference](docs/API.md) · [Architecture](docs/ARCHITECTURE.md) · [Security reporting](SECURITY.md)
+
 ## What you can try
 
 - Register or sign in with a seeded demo account and browse private and group chats.
@@ -66,3 +70,5 @@ It checks health, demo login, profile lookup, chat listing, and invalid JSON han
 Use sample data and test files. Startup refreshes the shared demo account, and changes to the seed version can reset its conversations. Calls are simulated. The experimental encryption mode is for learning, and attachments are stored with message data.
 
 This educational project is independent of Telegram. Source code is released under the [MIT License](LICENSE).
+
+Dependency update pull requests, secret scanning, and code scanning support continued maintenance. Review and test updates before merging them. Public repository access does not make the demo's seeded account or experimental encryption suitable for real private communications.
