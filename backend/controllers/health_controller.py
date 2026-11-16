@@ -1,55 +1,21 @@
 """CONTROLLER — Health check HTTP handler."""
-
-from flask import Blueprint, jsonify
-
-
-
-import config
+from flask import Blueprint, current_app, jsonify
 
 from database.singleton import DatabaseSingleton
-
-
 
 health_bp = Blueprint("health", __name__)
 
 
-
-
-
 @health_bp.get("/health")
-
 def health():
-
     singleton = DatabaseSingleton.get_instance()
-
     ok, detail = singleton.test_connection()
-
     if ok:
+        return jsonify({"status": "ok", "database": "connected", "engine": singleton.engine})
 
-        body = {"status": "ok", "database": "connected", "engine": singleton.engine}
-
-        if config.DEBUG:
-
-            body["connection"] = singleton.connection_info()
-
-        return jsonify(body)
-
-
-
-    body = {"status": "error", "database": "disconnected"}
-
-    if config.DEBUG:
-
-        info = singleton.connection_info()
-
-        body["engine"] = singleton.engine
-
-        body["detail"] = detail
-
-        body["connection"] = info
-
-    else:
-
-        body["error"] = "Database unavailable"
-
-    return jsonify(body), 503
+    current_app.logger.warning("Health check database failure: %s", detail)
+    return jsonify({
+        "status": "error",
+        "database": "disconnected",
+        "error": "Database unavailable",
+    }), 503
