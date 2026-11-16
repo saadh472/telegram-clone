@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   frontend-and-backend-checks:
     name: Frontend and backend checks
@@ -26,7 +29,9 @@ jobs:
         run: npm ci --prefix frontend
 
       - name: Check frontend modules
-        run: npm --prefix frontend run check
+        run: |
+          npm --prefix frontend run check
+          node frontend/scripts/test-api-target.mjs
 
       - name: Set up Python
         uses: actions/setup-python@v5

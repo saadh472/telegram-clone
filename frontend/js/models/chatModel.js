@@ -1,6 +1,6 @@
 /** MODEL — Chat and message API + merge helpers. */
 
-import { authState, chatState, OPTIMISTIC_MATCH_MS, DEBOUNCE_MS, API_BASE } from '../config.js';
+import { authState, chatState, OPTIMISTIC_MATCH_MS, DEBOUNCE_MS } from '../config.js';
 import { apiFetch } from './apiModel.js';
 import {
   encryptMessage,
@@ -250,12 +250,11 @@ export async function sendHeartbeat() {
 }
 
 export function sendOfflineBeacon() {
-  const token = authState.token || localStorage.getItem('token');
-  if (!token) return;
-  fetch(`${API_BASE}/users/offline`, {
+  if (!(authState.token || localStorage.getItem('token'))) return;
+  apiFetch('/users/offline', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    keepalive: true
+    keepalive: true,
+    skipAuthRedirect: true
   }).catch(() => {});
 }
 

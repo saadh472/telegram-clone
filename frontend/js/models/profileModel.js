@@ -1,6 +1,6 @@
 /** MODEL — Profile extras persisted in localStorage (demo). */
 import { authState } from '../config.js';
-import { getInitials, avatarGradient } from '../utils.js';
+import { getInitials, avatarGradient, userAvatarStyle } from '../utils.js';
 
 const BIO_KEY = 'telegram_profile_bio';
 const AVATAR_KEY = 'telegram_profile_avatar';
@@ -60,21 +60,36 @@ export function setEffectiveDisplayName(name) {
   }
 }
 
-export function buildAvatarMarkup({ sizeClass = '', ring = false, large = false } = {}) {
-  const user = authState.user;
-  if (!user) return '';
-  const stored = getStoredAvatar();
-  const name = getEffectiveDisplayName();
-  const ringHtml = ring
-    ? `<span class="profile-avatar-ring${large ? ' profile-avatar-ring-lg' : ''}"></span>`
-    : '';
-  const inner = stored
-    ? `<img src="${stored}" alt="" class="avatar-img" draggable="false">`
-    : getInitials(name);
-  const style = stored ? '' : ` style="background:${avatarGradient(user.avatar_color)}"`;
-  return `
-    <div class="profile-avatar-wrap${large ? ' profile-avatar-wrap-lg' : ''}">
-      ${ringHtml}
-      <div class="avatar${sizeClass ? ` ${sizeClass}` : ''}${stored ? ' has-photo' : ''}"${style}>${inner}</div>
-    </div>`;
+export function buildAvatar({ sizeClass, ring = false, large = false, sidebar = false } = {}) {
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  if (sizeClass) avatar.classList.add(sizeClass);
+  const photo = getStoredAvatar();
+  if (photo && /^data:image\/(?:png|jpeg|gif|webp|avif|bmp|x-icon);base64,[A-Za-z0-9+/]+={0,2}$/i.test(photo)) {
+    const img = document.createElement('img');
+    img.src = photo;
+    img.alt = '';
+    img.className = 'avatar-img';
+    img.draggable = false;
+    avatar.classList.add('has-photo');
+    avatar.append(img);
+  } else {
+    const user = authState.user;
+    const color = /^#[0-9a-f]{6}$/i.test(user.avatar_color || '') ? user.avatar_color : undefined;
+    avatar.style.background = sidebar
+      ? userAvatarStyle(user.username || user.display_name, color)
+      : avatarGradient(color);
+    avatar.textContent = getInitials(getEffectiveDisplayName());
+  }
+  if (sidebar) return avatar;
+
+  const wrap = document.createElement('div');
+  wrap.className = large ? 'profile-avatar-wrap profile-avatar-wrap-lg' : 'profile-avatar-wrap';
+  if (ring) {
+    const outline = document.createElement('span');
+    outline.className = large ? 'profile-avatar-ring profile-avatar-ring-lg' : 'profile-avatar-ring';
+    wrap.append(outline);
+  }
+  wrap.append(avatar);
+  return wrap;
 }

@@ -12,7 +12,7 @@ import {
 
   getEffectiveDisplayName,
 
-  buildAvatarMarkup,
+  buildAvatar,
 
   getUserStatus,
 
@@ -96,10 +96,6 @@ export function renderProfile() {
 
   const user = authState.user;
 
-  const displayName = getEffectiveDisplayName();
-
-  const bio = getProfileBio();
-
   const isDark = getTheme() === 'dark';
 
 
@@ -108,11 +104,9 @@ export function renderProfile() {
 
     <section class="profile-hero">
 
-      ${buildAvatarMarkup({ sizeClass: 'profile-avatar-lg', ring: true, large: true })}
-
       <div class="profile-name-row">
 
-        <input type="text" id="profile-display-name" class="profile-display-name-input" value="${escapeHtml(displayName)}" aria-label="Display name" maxlength="64">
+        <input type="text" id="profile-display-name" class="profile-display-name-input" aria-label="Display name" maxlength="64">
 
         <button type="button" id="profile-edit-name-btn" class="icon-btn profile-edit-btn" aria-label="Edit display name" title="Edit name">
 
@@ -122,7 +116,7 @@ export function renderProfile() {
 
       </div>
 
-      <p class="profile-username">@${escapeHtml(user.username || 'user')}</p>
+      <p class="profile-username"></p>
 
       <div class="profile-status-row">
 
@@ -144,7 +138,7 @@ export function renderProfile() {
 
       <div class="profile-field-row">
 
-        <textarea id="profile-bio-input" class="profile-bio-input" rows="2" placeholder="Add a few words about yourself" maxlength="140" aria-label="Bio">${escapeHtml(bio)}</textarea>
+        <textarea id="profile-bio-input" class="profile-bio-input" rows="2" placeholder="Add a few words about yourself" maxlength="140" aria-label="Bio"></textarea>
 
       </div>
 
@@ -180,7 +174,7 @@ export function renderProfile() {
 
           <span class="profile-list-label">Email</span>
 
-          <span class="profile-list-value">${escapeHtml(user.username || 'user')}@telegram.demo</span>
+          <span class="profile-list-value" data-profile-email></span>
 
         </div>
 
@@ -196,7 +190,7 @@ export function renderProfile() {
 
           <span class="profile-list-label">Username</span>
 
-          <span class="profile-list-value">@${escapeHtml(user.username || 'user')}</span>
+          <span class="profile-list-value" data-profile-username></span>
 
         </div>
 
@@ -264,6 +258,13 @@ export function renderProfile() {
 
     </section>`;
 
+  const username = user.username || 'user';
+  body.querySelector('.profile-hero').prepend(buildAvatar({ sizeClass: 'profile-avatar-lg', ring: true, large: true }));
+  body.querySelector('#profile-display-name').value = getEffectiveDisplayName();
+  body.querySelector('#profile-bio-input').value = getProfileBio();
+  body.querySelector('.profile-username').textContent = `@${username}`;
+  body.querySelector('[data-profile-email]').textContent = `${username}@telegram.demo`;
+  body.querySelector('[data-profile-username]').textContent = `@${username}`;
 }
 
 

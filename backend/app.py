@@ -101,10 +101,8 @@ def create_app() -> Flask:
         return jsonify({"error": f"Upload too large (max {config.MAX_ATTACHMENT_LABEL})"}), 413
 
     @app.errorhandler(500)
-    def server_error(err):
+    def server_error(_):
         app.logger.exception("Internal server error")
-        if config.DEBUG:
-            return jsonify({"error": str(err)}), 500
         return jsonify({"error": "Internal server error"}), 500
 
     @app.after_request
@@ -132,7 +130,7 @@ def main() -> None:
 
     print(f"Telegram Web Clone API (Flask MVC) on http://localhost:{config.PORT}/api")
     print("Demo account: saad / 12345678")
-    app.run(host=config.HOST, port=config.PORT, debug=config.DEBUG, threaded=True)
+    app.run(host=config.HOST, port=config.PORT, debug=config.DEBUG, use_debugger=False, threaded=True)
 
 
 if __name__ == "__main__":

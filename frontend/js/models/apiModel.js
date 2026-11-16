@@ -9,6 +9,16 @@ export function setUnauthorizedHandler(fn) {
   onUnauthorized = fn;
 }
 
+const API_ROUTE = /^\/(?:health|auth\/(?:login|register|logout)|users(?:\/(?:me|heartbeat|offline))?|chats(?:\/[0-9]+\/(?:members|typing|reactions|messages(?:\/[0-9]+(?:\/(?:hide|reactions))?)?))?)$/;
+
+function endpoint(path) {
+  const route = path.split('?', 1)[0];
+  if (!API_ROUTE.test(route) || /[\r\n#]/.test(path)) {
+    throw new Error('Unexpected API route.');
+  }
+  return API_BASE + path;
+}
+
 export function formatBackendUnreachable() {
   const host = window.location.hostname || '127.0.0.1';
   return `Cannot reach backend. Run start.cmd and open http://${host}:5500 (not file://)`;
@@ -31,6 +41,7 @@ function markBackendUnreachable() {
 }
 
 export async function apiFetch(path, options = {}) {
+  const url = endpoint(path);
   const { skipAuthRedirect = false, retries = 0, signal, ...fetchOpts } = options;
   const headers = { 'Content-Type': 'application/json', ...(fetchOpts.headers || {}) };
   const token = localStorage.getItem('token');
@@ -38,7 +49,7 @@ export async function apiFetch(path, options = {}) {
 
   let res;
   try {
-    res = await fetch(`${API_BASE}${path}`, { ...fetchOpts, headers, signal });
+    res = await fetch(url, { ...fetchOpts, headers, signal, redirect: 'error' });
   } catch (err) {
     if (err.name === 'AbortError') throw err;
     connectionState.backendReachable = false;
@@ -71,7 +82,7 @@ export async function apiFetch(path, options = {}) {
 
 export async function checkBackendHealth(silent = false) {
   try {
-    const res = await fetch(`${API_BASE}/health`);
+    const res = await fetch(endpoint('/health'), { redirect: 'error' });
     const data = await res.json();
     const ok = res.ok && data.status === 'ok';
     if (ok) {

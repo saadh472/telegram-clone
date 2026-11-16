@@ -1,12 +1,17 @@
 /** Shared config and application state. API uses same host as the page (works on LAN). */
-function normalizeApiBase(value) {
-  return String(value || '').trim().replace(/\/+$/, '');
-}
-
 function resolveApiBase() {
-  const params = new URLSearchParams(window.location.search);
-  const override = normalizeApiBase(params.get('api') || window.TELEGRAM_API_BASE);
-  if (override) return override;
+  // A deployment may configure its API in deploy-config.js. A shared page
+  // URL must never choose where credentials or bearer tokens are sent.
+  const configured = window.TELEGRAM_API_BASE;
+  if (typeof configured === 'string' && configured.trim()) {
+    const api = new URL(configured, window.location.href);
+    api.pathname = api.pathname.replace(/\/+$/, '');
+    if (!['http:', 'https:'].includes(api.protocol) || api.username || api.password
+        || api.search || api.hash || !api.pathname.endsWith('/api')) {
+      throw new Error('The configured API base must be an HTTP(S) URL ending in /api.');
+    }
+    return api.href;
+  }
 
   if (window.location.protocol === 'file:') {
     return 'http://127.0.0.1:3000/api';

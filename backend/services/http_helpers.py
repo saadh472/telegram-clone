@@ -11,10 +11,8 @@ from services.validators import ValidationError
 
 
 def server_error_response(exc: Exception) -> tuple[Any, int]:
-    """Log full exception; return generic message unless DEBUG."""
+    """Keep exception details in server logs."""
     current_app.logger.exception("Unhandled API error: %s", exc)
-    if config.DEBUG:
-        return jsonify({"error": str(exc)}), 500
     return jsonify({"error": "Internal server error"}), 500
 
 
@@ -31,11 +29,11 @@ def request_json() -> dict[str, Any]:
 
 def map_client_error(exc: Exception) -> tuple[Any, int] | None:
     if isinstance(exc, ValidationError):
-        return jsonify({"error": str(exc)}), 400
+        return jsonify({"error": exc.public_message}), 400
     if isinstance(exc, PermissionError):
         return jsonify({"error": "Access denied"}), 403
     if isinstance(exc, ValueError):
-        return jsonify({"error": str(exc)}), 400
+        return jsonify({"error": "Invalid request value"}), 400
     return None
 
 

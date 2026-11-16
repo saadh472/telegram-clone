@@ -7,10 +7,16 @@ import config
 
 
 class ValidationError(ValueError):
-    pass
+    """A validation message deliberately written for the API caller."""
+
+    def __init__(self, public_message: str):
+        super().__init__(public_message)
+        self.public_message = public_message
 
 
 def validate_username(username: str) -> str:
+    if not isinstance(username, str):
+        raise ValidationError("Username must be text")
     u = (username or "").strip().lower()
     if len(u) < 2:
         raise ValidationError("Username must be at least 2 characters")
@@ -20,14 +26,18 @@ def validate_username(username: str) -> str:
 
 
 def validate_password(password: str, min_len: int = 6) -> str:
-    if not password:
+    if not isinstance(password, str) or not password:
         raise ValidationError("Password is required")
     if len(password) < min_len:
         raise ValidationError(f"Password must be at least {min_len} characters")
+    if len(password.encode("utf-8")) > 72:
+        raise ValidationError("Password must be at most 72 UTF-8 bytes")
     return password
 
 
 def validate_display_name(name: str) -> str:
+    if not isinstance(name, str):
+        raise ValidationError("Display name must be text")
     n = (name or "").strip()
     if len(n) < 2:
         raise ValidationError("Display name must be at least 2 characters")
@@ -37,6 +47,8 @@ def validate_display_name(name: str) -> str:
 
 
 def validate_group_name(name: str) -> str:
+    if not isinstance(name, str):
+        raise ValidationError("Group name must be text")
     n = (name or "").strip()
     if len(n) < 2:
         raise ValidationError("Group name must be at least 2 characters")
@@ -46,6 +58,8 @@ def validate_group_name(name: str) -> str:
 
 
 def validate_reaction_emoji(emoji: str) -> str:
+    if not isinstance(emoji, str):
+        raise ValidationError("Invalid reaction emoji")
     e = (emoji or "").strip()
     if e not in ALLOWED_REACTION_EMOJIS:
         raise ValidationError("Invalid reaction emoji")

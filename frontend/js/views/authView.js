@@ -1,15 +1,25 @@
 /** VIEW — Auth screen DOM. */
 import { authState } from '../config.js';
-import { $, $$, escapeHtml, getInitials, userAvatarStyle } from '../utils.js';
-import { getEffectiveDisplayName, getStoredAvatar, buildAvatarMarkup } from '../models/profileModel.js';
+import { $, $$ } from '../utils.js';
+import { getEffectiveDisplayName, buildAvatar } from '../models/profileModel.js';
 
-function sidebarAvatarHtml(user) {
-  const stored = getStoredAvatar();
-  const name = getEffectiveDisplayName();
-  if (stored) {
-    return `<div class="avatar xs has-photo"><img src="${stored}" alt="" class="avatar-img" draggable="false"></div>`;
+function userInfoText(showEditHint = false) {
+  const text = document.createElement('div');
+  text.className = 'user-info-text';
+  const displayName = document.createElement('span');
+  displayName.className = 'user-display-name';
+  displayName.textContent = getEffectiveDisplayName();
+  const username = document.createElement('span');
+  username.className = 'user-username';
+  username.textContent = `@${authState.user.username || 'user'}`;
+  text.append(displayName, username);
+  if (showEditHint) {
+    const hint = document.createElement('span');
+    hint.className = 'settings-edit-photo';
+    hint.textContent = 'Tap to change photo';
+    text.append(hint);
   }
-  return `<div class="avatar xs" style="background:${userAvatarStyle(user)}">${getInitials(name)}</div>`;
+  return text;
 }
 
 let screenTransitionReady = false;
@@ -58,23 +68,15 @@ export function renderUserInfo() {
   const el = $('#user-info');
   const settingsEl = $('#settings-user-info');
   if (!authState.user) return;
-  const sidebarHtml = `
-    ${sidebarAvatarHtml(authState.user)}
-    <div class="user-info-text">
-      <span class="user-display-name">${escapeHtml(getEffectiveDisplayName())}</span>
-      <span class="user-username">@${escapeHtml(authState.user.username || 'user')}</span>
-    </div>`;
-  const settingsHtml = `
-    <button type="button" class="settings-user-btn" aria-label="Open profile">
-      ${buildAvatarMarkup({ sizeClass: 'settings-profile-avatar', ring: true })}
-      <div class="user-info-text">
-        <span class="user-display-name">${escapeHtml(getEffectiveDisplayName())}</span>
-        <span class="user-username">@${escapeHtml(authState.user.username || 'user')}</span>
-        <span class="settings-edit-photo">Tap to change photo</span>
-      </div>
-    </button>`;
-  if (el) el.innerHTML = sidebarHtml;
-  if (settingsEl) settingsEl.innerHTML = settingsHtml;
+  if (el) el.replaceChildren(buildAvatar({ sizeClass: 'xs', sidebar: true }), userInfoText());
+  if (settingsEl) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'settings-user-btn';
+    button.setAttribute('aria-label', 'Open profile');
+    button.append(buildAvatar({ sizeClass: 'settings-profile-avatar', ring: true }), userInfoText(true));
+    settingsEl.replaceChildren(button);
+  }
 }
 
 export function setAuthTab(tab) {

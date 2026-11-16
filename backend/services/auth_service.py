@@ -10,6 +10,14 @@ from services.validators import ValidationError, validate_display_name, validate
 from views.auth_view import auth_json, logout_json
 
 
+class UsernameTakenError(Exception):
+    """A registration attempt used an existing username."""
+
+
+class InvalidCredentialsError(Exception):
+    """The supplied credentials do not authenticate a user."""
+
+
 class AuthService:
     def __init__(self) -> None:
         self.users = UserModel()
@@ -19,7 +27,7 @@ class AuthService:
         password = validate_password(password)
         display_name = validate_display_name(display_name)
         if self.users.exists(username):
-            raise ValueError("Username already exists")
+            raise UsernameTakenError
         color = config.AVATAR_COLORS[hash(username) % len(config.AVATAR_COLORS)]
         pwd_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=10)).decode()
         user = self.users.create(username, pwd_hash, display_name, color)
@@ -27,11 +35,13 @@ class AuthService:
         return auth_json(token, user)
 
     def login(self, username: str, password: str) -> dict:
-        if not username or not password:
+        if not isinstance(username, str) or not isinstance(password, str) or not username.strip() or not password:
             raise ValidationError("Username and password required")
+        if len(password.encode("utf-8")) > 72:
+            raise InvalidCredentialsError
         user = self.users.find_by_username(username.strip().lower())
         if not user or not bcrypt.checkpw(password.encode(), user["password"].encode()):
-            raise ValueError("Invalid username or password")
+            raise InvalidCredentialsError
         self.users.set_online(user["id"], True)
         token = create_token(user["id"], user["username"])
         return auth_json(token, user)

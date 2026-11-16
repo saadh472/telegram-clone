@@ -174,8 +174,8 @@ def toggle_reaction(chat_id: int, message_id: int):
 def get_me():
     try:
         return jsonify(chat_service.get_current_user(g.user_id))
-    except ValidationError as exc:
-        return jsonify({"error": str(exc)}), 404
+    except ValidationError:
+        return jsonify({"error": "User not found"}), 404
     except Exception as exc:
         return server_error_response(exc)
 
